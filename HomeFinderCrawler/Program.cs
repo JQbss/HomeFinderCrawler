@@ -6,7 +6,7 @@ namespace HomeFinderCrawler
     {
         public static void Main(string[] args)
         {
-            DatabaseService db = new DatabaseService(new DataContext("DataSource=file::memory:?cache=shared"));
+            DatabaseService db = new(new DataContext("DataSource=file::memory:?cache=shared"));
             db.Test();
         }
     }

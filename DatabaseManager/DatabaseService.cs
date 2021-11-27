@@ -9,10 +9,11 @@ namespace DatabaseManager
         public DatabaseService(DataContext dbContext)
         {
             _dbContext = dbContext;
+            _dbContext.Database.EnsureCreated();
         }
 
         //
-        // SELECT
+        // SELECT by id
         //
         public Image GetImageById(int id)
         {
@@ -29,26 +30,77 @@ namespace DatabaseManager
             return _dbContext.AnnouncementsDictionaryStatuses.Where(x => x.Id == id).FirstOrDefault();
         }
 
+        public Crawler_website GetCrawlerWebsiteById(int id)
+        {
+            return _dbContext.CrawlerWebsites.Where(x => x.Id == id).FirstOrDefault();
+        }
+
+        //
+        // SELECT by link
+        //
+
+        public Announcement GetAnnouncementByLink(string link)
+        {
+            return _dbContext.Announcements.Where(x => x.link == link).FirstOrDefault();
+        }
+
+        //SELECT * FROM TABLE
+        public List<Crawler_website> GetCrawlerWebsites()
+        {
+            return _dbContext.CrawlerWebsites.ToList();
+        }
+
+        public List<Announcement> GetAnnouncements()
+        {
+            return _dbContext.Announcements.ToList();
+        }
+
         //
         // INSERT
         //
         public bool AddImage(Image image)
         {
+            if (image == null) return false;
+
             _dbContext.Images.Add(image);
             return true;
         }
 
         public bool AddAnnouncement(Announcement announcement)
         {
+            if(announcement == null) return false;
+
             _dbContext.Announcements.Add(announcement);
             return true;
         }
 
         public bool AddAnnouncementDictionaryStatus(Announcements_dictionary_status announcementsDictionaryStatus)
         {
+            if (announcementsDictionaryStatus == null) return false;
+
             _dbContext.AnnouncementsDictionaryStatuses.Add(announcementsDictionaryStatus);
             return true;
         }
+
+        public bool AddCrawlerWebsite(Crawler_website crawler_Website)
+        {
+            if (crawler_Website == null) return false;
+
+            _dbContext.CrawlerWebsites.Add(crawler_Website);
+            return true;
+        }
+
+        //DELETE
+
+        //TODO
+        public bool RemoveCrawlerWebsite(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+
+            //_dbContext.CrawlerWebsites.Dele;
+            return true;
+        }
+
 
         public void SaveChanges()
         {
@@ -73,7 +125,8 @@ namespace DatabaseManager
                     To_negotiate = true,
                     Announcements_dictionary_item = new Announcement_dictionary_item() { Name = "Sprzedaż"},
                     Announcements_dictionary_category = new Announcement_dictionary_category() { Name = "Sprzedażż"},
-                    Announcements_dictionary_status = new Announcements_dictionary_status() { Name = "Aktywnee"}
+                    Announcements_dictionary_status = new Announcements_dictionary_status() { Name = "Aktywnee"},
+                    link = "www.olx.pl"
                     }
             });
 

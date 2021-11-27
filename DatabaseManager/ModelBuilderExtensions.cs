@@ -27,6 +27,10 @@ namespace DatabaseManager
                     new Announcement_dictionary_category() { Id = 1, Name = "Sprzedaż" },
                     new Announcement_dictionary_category() { Id = 2, Name = "Wynajem" }
                 );
+/*            modelBuilder.Entity<Crawler_website>().HasData
+                (
+                    new Crawler_website() { Id = 1, Website = "olx.pl", Regex = "reg" }
+                );*/
         }
     }
 }

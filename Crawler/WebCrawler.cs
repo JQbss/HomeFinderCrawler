@@ -12,7 +12,7 @@ namespace Crawler
         readonly DatabaseService _databaseService;
 
         public bool IsWorking { get; set; } = false;
-        private bool _isRunning { get; set; } = false;
+        private bool _isRunning = false;
 
         public WebCrawler(DataContext dataContext)
         {
@@ -39,10 +39,6 @@ namespace Crawler
 
         public void StartLinkAnnouncementCrawler()
         {
-            //Do linku wystarczy dodawać ?page=2
-            // ?page=3
-
-            
             HtmlWeb web = new();
             //Czytanie linków z ogłoszeniami i dodawanie ich do bazy danych.
             //Doawaj dopóki nie znajdzie ogłoszenia, które jest już w bazie danych
@@ -54,15 +50,17 @@ namespace Crawler
                 int page = 1;
                 while (page < crawler.MaxPages)
                 {
+                    Console.WriteLine(crawler.Website + crawler.Pagequery + page);
                     HtmlDocument doc = web.Load($"{crawler.Website}{crawler.Pagequery}{page}");
                     HtmlNode[] nodes = doc.DocumentNode.SelectNodes($"//{crawler.Regex}").ToArray();
 
                     foreach (HtmlNode item in nodes)
                     {
-                        string link = item.GetAttributeValue("href", "");
-
+                        string link = item.GetAttributeValue(crawler.Link_attribute_value, "");
+                        Console.WriteLine(link);
                         //TODO: To database
-                        if (link.Contains("oferta") && !link.Contains("http"))
+                        //if (link.Contains("oferta") && !link.Contains("http")) // działa dla olx
+                        if (link.Contains("gratka"))
                         {
 
                             //TODO: Sprwadzanie czy ogłoszenie jest już w bazie danych
@@ -81,14 +79,8 @@ namespace Crawler
                             {
                                 //Adding data to database
                                 Console.WriteLine(crawler.Prelink + link);
-
                                 announcements.Add(new() { Link = crawler.Prelink + link, Processed = false, Crawler_Website = crawler });
-                                //_databaseService.AddAnnouncement(announcement);
                             }
-                        }
-                        else
-                        {
-                            //Console.WriteLine(link);
                         }
                     }
                     page++;
@@ -96,11 +88,8 @@ namespace Crawler
             }
 
             //Dodawanie do bazy danych
-
             foreach(Announcement announcement in announcements.Distinct())
-            {
                 _databaseService.AddAnnouncement(announcement);
-            }
 
             _databaseService.SaveChanges();
         }
@@ -109,22 +98,20 @@ namespace Crawler
         public void StartAnnouncementsCrawler()
         {
             // Pobieranie nieprzetworzonych danych
-
             List<Announcement> announcements = _databaseService.GetAnnouncements().Where(x => x.Processed == false).ToList();
             Console.WriteLine(announcements.Count);
             foreach (Announcement announcement in announcements)
             {
-                if(announcement.Link.Contains("olx"))
-                {
+                //if(announcement.Link.Contains("olx"))
                     StartAnnouncementCrawler(announcement.Link);
-                }
             }
             _databaseService.SaveChanges();
         }
 
         private void StartAnnouncementCrawler(string url)
         {
-            //TODO: Zanim zacznę przetwarzać muszę sprwadzać czy ogłozenie jest w ogóle jeszcze aktualne
+            //TODO: Może lepiej sprawdzać po jakimś id bądź nazwie klasy to będzie wiele czytelniej.
+            //TODO: Rozdzielić te funkcję na mniejsze funkcje.
             //Jeśli nie jest aktualne to trzeba usunąć
 
             // Przetwarzanie informacji o ogłoszeniu
@@ -134,58 +121,59 @@ namespace Crawler
             HtmlNode[] nodes;
             Announcement announcement = _databaseService.GetAnnouncementByLink(url);
 
+            Console.WriteLine(announcement.Link);
             //Pobieranie zdjęć ogłoszenia
             List<Image> images = new();
-            foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Image_node_name}"))
+            foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Image_node_name}").Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Image_class_name)))
             {
-                string img = item.GetAttributeValue("data-src", "");
+                string img = item.GetAttributeValue(announcement.Crawler_Website.Crawler_Announcement.Image_attribute_value, "");
+                Console.WriteLine(img);
                 if (!string.IsNullOrEmpty(img))
-                {
                     images.Add(new Image() { Url = img });
-                    //Console.WriteLine(img);
-                }
             }
 
             //Pobieranie tytułu ogłoszenia
-            if (doc.DocumentNode.Descendants("h1").Any())
+            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Title_node_name).Any())
             {
-                foreach (HtmlNode item in doc.DocumentNode.SelectNodes("//h1"))
-                {
-                    announcement.Title = item.InnerText;
-                    //Console.WriteLine(item.InnerText);
-                }
+                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Title_node_name}"))
+                    announcement.Title = item.InnerText.Trim();
             }
 
 
             // Pobieranie ceny
-            if (doc.DocumentNode.Descendants("h3").Any())
+            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Price_node_name).Any())
             {
-                foreach (HtmlNode item in doc.DocumentNode.SelectNodes("//h3"))
+                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Price_node_name}"))
                 {
+                    //To jest dobrze i tak ma być
                     string tmp = Regex.Match(item.InnerText.Replace(" ", ""), @"\d+").Value;
                     if (!string.IsNullOrEmpty(tmp))
-                    {
                         announcement.Price = Convert.ToInt32(tmp);
-                        //Console.WriteLine(tmp);
-                    }
                 }
             }
 
+            nodes = doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Description_node_name}")
+                .Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Description_class_name)).ToArray();
 
-            // Pobieranie danych z opisu ogłoszenia
-            // div class="css-g5mtbi-Text"
-
-            nodes = doc.DocumentNode.SelectNodes("//div").Where(x => x.HasClass("css-g5mtbi-Text")).ToArray();
-
+            //Dlaczego tutaj są takie dziwne pętle
+            //Tego nie powinno tutaj być
             foreach( HtmlNode item in nodes)
             {
                 Console.WriteLine(item.InnerText);
-                announcement.Description = item.InnerText;
+                announcement.Description = item.InnerText.Trim();
             }
 
-            // Pobieranie ogłoszenia z bazy po linku i jego aktualizacja
+            // Updating announcement
             announcement.Images = images;
             announcement.Processed = true;
+            _databaseService.SaveChanges();
+        }
+
+        public void AddWebsite(Crawler_website website)
+        {
+            if (website == null) return;
+
+            _databaseService.AddCrawlerWebsite(website);
             _databaseService.SaveChanges();
         }
 

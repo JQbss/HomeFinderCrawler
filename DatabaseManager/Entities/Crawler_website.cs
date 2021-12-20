@@ -11,7 +11,8 @@ namespace DatabaseManager.Entities
         public int RefreshTime { get; set; } = 1000;
         public int MaxPages { get; set; }
         public string Prelink { get; set; }
-        public string Pagequery { get; set; } = "?page=";
+        public string Pagequery { get; set; }
+        public string Link_attribute_value { get; set; }
         public Crawler_announcement Crawler_Announcement { get; set; }
     }
 }

@@ -56,7 +56,7 @@ namespace DatabaseManager
         //SELECT * FROM TABLE
         public List<Crawler_website> GetCrawlerWebsites()
         {
-            return _dbContext.CrawlerWebsites.ToList();
+            return _dbContext.CrawlerWebsites.Include(x => x.Crawler_Announcement).ToList();
         }
 
         public List<Announcement> GetAnnouncements()

@@ -7,6 +7,8 @@ namespace RequestsServices
 {
     public class RequestsService
     {
+        // Hasło i login nie powinny być tutaj trzymane pod żadnym pozorem
+        // To jest chyba za bardzo niebezpieczne
         private bool _isLogged = false;
         private string _token;
 
@@ -15,19 +17,28 @@ namespace RequestsServices
         public void Login(string username, string password)
         {
             HttpClient client = new();
-            StringContent sc = new("{sending}", Encoding.UTF8, "application/json");
+            StringContent sc = new($"{{email:\"{username}\", password:\"{password}\"}}", Encoding.UTF8, "application/json");
             var response = client.PostAsync(PostUrl, sc).Result;
-            string responseContent = response.Content.ReadAsStringAsync().Result;
+            response.Content.ReadAsStringAsync();
 
             if(response.StatusCode == System.Net.HttpStatusCode.OK)
-                Console.WriteLine("WORK");
-
-            _isLogged = true;
+            {
+                Console.WriteLine("Work");
+                _isLogged = true;
+            }
+            //Sytuacja kiedy nie udało nam się zalogować
+            else
+            {
+                _isLogged= false;
+            }
         }
 
         public void Logout()
         {
             _isLogged = false;
+
+            //Usuwanie tokena
+            _token = string.Empty;
         }
 
         public bool Send(List<Announcement> announcements)
@@ -45,14 +56,14 @@ namespace RequestsServices
             HttpClient client = new();
             HttpResponseMessage response = client.PostAsync(PostUrl, sc).Result;
 
-            string responseContent = response.Content.ReadAsStringAsync().Result;
+            response.Content.ReadAsStringAsync();
 
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
                 Console.WriteLine("WORK!");
-
-            Console.WriteLine(responseContent);
-            return true;
+                return true;
+            }
+            return false;
         }
     }
 }
- 

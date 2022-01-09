@@ -1,6 +1,7 @@
 ﻿using DatabaseManager;
 using DatabaseManager.Entities;
 using HtmlAgilityPack;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Crawler
@@ -58,29 +59,51 @@ namespace Crawler
                     {
                         string link = item.GetAttributeValue(crawler.Link_attribute_value, "");
                         Console.WriteLine(link);
-                        //TODO: To database
-                        //if (link.Contains("oferta") && !link.Contains("http")) // działa dla olx
-                        if (link.Contains("gratka"))
+                        bool control = true;
+                        if (crawler.Crawler_Announcement.Crawler_Website_Link_Contains is not null)
                         {
-
-                            //TODO: Sprwadzanie czy ogłoszenie jest już w bazie danych
-                            Announcement announcement1 = _databaseService.GetAnnouncementByLink(crawler.Prelink + link);
-                            if (announcement1 != null)
+                            foreach (var link_contains in crawler.Crawler_Announcement.Crawler_Website_Link_Contains)
                             {
-                                Console.WriteLine("ogłoszenia są aktualne");
-                                /*foreach (Announcement announcement in announcements.Distinct())
+                                if (link_contains.IsContains)
                                 {
-                                    _databaseService.AddAnnouncement(announcement);
+                                    if (!link.Contains(link_contains.Value))
+                                    {
+                                        control = false;
+                                        break;
+                                    }
                                 }
-                                _databaseService.SaveChanges();
-                                return;*/
+                                else
+                                {
+                                    if (link.Contains(link_contains.Value))
+                                    {
+                                        control = false;
+                                        break;
+                                    }
+                                }
                             }
-                            else
+                        }
+
+                        // Jeśli link pasuje do podango schematu to kontunuujmy badanie
+                        if (!control) continue;
+
+
+                        //TODO: Sprwadzanie czy ogłoszenie jest już w bazie danych
+                        Announcement announcement1 = _databaseService.GetAnnouncementByLink(crawler.Prelink + link);
+                        if (announcement1 != null)
+                        {
+                            Console.WriteLine("ogłoszenie jest aktualne");
+                            /*foreach (Announcement announcement in announcements.Distinct())
                             {
-                                //Adding data to database
-                                Console.WriteLine(crawler.Prelink + link);
-                                announcements.Add(new() { Link = crawler.Prelink + link, Processed = false, Crawler_Website = crawler });
+                                _databaseService.AddAnnouncement(announcement);
                             }
+                            _databaseService.SaveChanges();
+                            return;*/
+                        }
+                        else
+                        {
+                            //Adding data to database
+                            Console.WriteLine(crawler.Prelink + link);
+                            announcements.Add(new() { Link = crawler.Prelink + link, Processed = false, Crawler_Website = crawler, Announcement_type = "manssion" });
                         }
                     }
                     page++;
@@ -100,13 +123,125 @@ namespace Crawler
             // Pobieranie nieprzetworzonych danych
             List<Announcement> announcements = _databaseService.GetAnnouncements().Where(x => x.Processed == false).ToList();
             Console.WriteLine(announcements.Count);
+
             foreach (Announcement announcement in announcements)
-            {
-                //if(announcement.Link.Contains("olx"))
-                    StartAnnouncementCrawler(announcement.Link);
-            }
+                StartAnnouncementCrawler(announcement.Link);
+
             _databaseService.SaveChanges();
         }
+
+        private static void DownloadImagesUrl(Announcement announcement, HtmlDocument doc)
+        {
+            List<Image> images = new();
+            foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Image_node_name}")
+                .Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Image_class_name)))
+            {
+                string img = item.GetAttributeValue(announcement.Crawler_Website.Crawler_Announcement.Image_attribute_value, "");
+                Console.WriteLine(img);
+                if (!string.IsNullOrEmpty(img))
+                    images.Add(new Image() { Url = img });
+            }
+            announcement.Images = images;
+        }
+        private static void DownloadTitle(Announcement announcement, HtmlDocument doc)
+        {
+            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Title_node_name).Any())
+            {
+                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Title_node_name}"))
+                    announcement.Title = item.InnerText.Trim();
+            }
+        }
+        private static void DownloadPrice(Announcement announcement, HtmlDocument doc)
+        {
+            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Price_node_name).Any())
+            {
+                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Price_node_name}"))
+                {
+                    //To jest dobrze i tak ma być
+                    string tmp = Regex.Match(item.InnerText.Replace(" ", ""), @"\d+").Value;
+                    if (!string.IsNullOrEmpty(tmp))
+                        announcement.Price = Convert.ToInt32(tmp);
+                }
+            }
+        }
+        private void DownloadManssionProperties(Announcement announcement, HtmlDocument doc)
+        {
+            if (announcement is null || doc is null) return;
+            // Sprawdzenie czy to ogłoszenie dotyczy nieruchomości
+            // TODO: Trzeba zrobić to porządnie na tabelach, a nie robić hardcode
+            if (announcement.Announcement_type is not null && announcement.Announcement_type.Equals("manssion"))
+            {
+                Console.WriteLine("OGŁOSZENIE JAKIEŚ NIERUCHOMOŚCI");
+
+                //Sprawdzanie czy jest jakiś rekord w Announcement_manssion dla tej posesji
+                var announcement_Manssion = _databaseService.GetAnnouncementManssionByAnnouncemenetId(announcement.Id);
+
+                if (announcement_Manssion is null) announcement_Manssion = new Announcement_manssion();
+                announcement_Manssion.Announcement = _databaseService.GetAnnouncementById(announcement.Id);
+                DownloadManssionLevel(announcement, doc, announcement_Manssion);
+                //Pobieranie listy z parametrami
+
+                _databaseService.AddAnnouncementManssion(announcement_Manssion);
+            }
+        }
+
+        private void DownloadManssionLevel(Announcement announcement, HtmlDocument doc, Announcement_manssion announcement_Manssion)
+        {
+            Console.WriteLine("POBIERANIE LEVELU REZYDENCJI");
+
+            //TODO: To można zrobić zupełnie uniwersalnie dla portali i szukać tylko w tej tablicy odpowiednich wzorców
+            HtmlNode[] nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
+
+            //TODO: Trzeba dodać do bazy danych odpowiednią tabelę, która ogarnie te synonimy i będzie wrzucać do odopwiednich danych -- na razie zasymuluję to tablicami
+            foreach (var node in nodes)
+            {
+                //Teraz trzeba zrobić pętle po li
+                foreach (var nod in node.SelectNodes("//li"))
+                {
+
+                    // każdy węzeł to inna właściwość
+                    string[] locations_synonims = new string[1];
+                    locations_synonims[0] = "lokalizacja";
+
+                    if (announcement_Manssion.Localization is null)
+                        announcement_Manssion.Localization = SearchFirstSynonymValue(nod, locations_synonims);
+
+                    string[] level_synonyms = new string[1];
+                    level_synonyms[0] = "Liczba pięter w budynku".Replace(" ","").ToLower();
+
+                    if(announcement_Manssion.Level is null)
+                        announcement_Manssion.Level = SearchFirstSynonymValue(nod, level_synonyms);
+
+                    string[] area_synonyms = new string[1];
+                    area_synonyms[0] = "powierzchniawm2";
+
+                    //TODO: Trzeba zrobić castowanie danych
+                   /* if (announcement_Manssion.Area is null)
+                        announcement_Manssion.Area = SearchFirstSynonymValue(nod, area_synonyms);*/
+
+                    string[] type_synonyms = new string[1];
+                    type_synonyms[0] = "typbudynku";
+                    if (announcement_Manssion.Type_of_building is null)
+                        announcement_Manssion.Type_of_building = SearchFirstSynonymValue(nod, type_synonyms);
+                }
+            }
+        }
+        
+        private string SearchFirstSynonymValue(HtmlNode node, string[] synonyms)
+        {
+            foreach (string synonym in synonyms)
+            {
+                string text = node.InnerText.Replace(" ", "").ToLower();
+                if (text.Contains(synonym))
+                {
+                    text = text.Replace(synonym, "").Trim();
+                    Console.WriteLine(text);
+                    return text;
+                }
+            }
+            return null;
+        }
+
 
         private void StartAnnouncementCrawler(string url)
         {
@@ -123,35 +258,13 @@ namespace Crawler
 
             Console.WriteLine(announcement.Link);
             //Pobieranie zdjęć ogłoszenia
-            List<Image> images = new();
-            foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Image_node_name}").Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Image_class_name)))
-            {
-                string img = item.GetAttributeValue(announcement.Crawler_Website.Crawler_Announcement.Image_attribute_value, "");
-                Console.WriteLine(img);
-                if (!string.IsNullOrEmpty(img))
-                    images.Add(new Image() { Url = img });
-            }
+            DownloadImagesUrl(announcement, doc);
+            DownloadTitle(announcement, doc);
+            DownloadPrice(announcement, doc);
+            DownloadManssionProperties(announcement, doc);
 
-            //Pobieranie tytułu ogłoszenia
-            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Title_node_name).Any())
-            {
-                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Title_node_name}"))
-                    announcement.Title = item.InnerText.Trim();
-            }
-
-
-            // Pobieranie ceny
-            if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Price_node_name).Any())
-            {
-                foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Price_node_name}"))
-                {
-                    //To jest dobrze i tak ma być
-                    string tmp = Regex.Match(item.InnerText.Replace(" ", ""), @"\d+").Value;
-                    if (!string.IsNullOrEmpty(tmp))
-                        announcement.Price = Convert.ToInt32(tmp);
-                }
-            }
-
+            //Pobieranie opisu ogłoszenia
+            //TODO: Zabezpieczyć, że nie zawsze może być podana klasa i takie tam.
             nodes = doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Description_node_name}")
                 .Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Description_class_name)).ToArray();
 
@@ -164,14 +277,23 @@ namespace Crawler
             }
 
             // Updating announcement
-            announcement.Images = images;
             announcement.Processed = true;
             _databaseService.SaveChanges();
         }
 
+        private bool WebsiteExists(string url)
+        {
+            foreach(var cw in _databaseService.GetCrawlerWebsites())
+            {
+                if (cw.Website.Equals(url))
+                    return true;
+            }
+            return false;
+        }
+
         public void AddWebsite(Crawler_website website)
         {
-            if (website == null) return;
+            if (website is null || WebsiteExists(website.Website)) return;
 
             _databaseService.AddCrawlerWebsite(website);
             _databaseService.SaveChanges();
@@ -179,34 +301,19 @@ namespace Crawler
 
         public void AddWebsite(string url, string regex, string prelink, int maxPage, Crawler_announcement crawler_Announcement)
         {
-            //Check if exists
-            //TODO: Checking Exists
-            List<Crawler_website> cw = _databaseService.GetCrawlerWebsites();
+            if (url is null || WebsiteExists(url)) return;
 
-            bool exists = false;
-            for(int i=0;i<cw.Count;i++)
+            Crawler_website ncw = new()
             {
-                if(cw[i].Website == url)
-                {
-                    exists = true;
-                    break;
-                }
-            }
+                Regex = regex,
+                Website = url,
+                Prelink = prelink,
+                MaxPages = maxPage,
+                Crawler_Announcement = crawler_Announcement
+            };
 
-            if(!exists)
-            {
-                Crawler_website ncw = new()
-                {
-                    Regex = regex,
-                    Website = url,
-                    Prelink = prelink,
-                    MaxPages = maxPage,
-                    Crawler_Announcement = crawler_Announcement
-                };
-
-                _databaseService.AddCrawlerWebsite(ncw);
-                _databaseService.SaveChanges();
-            }
+            _databaseService.AddCrawlerWebsite(ncw);
+            _databaseService.SaveChanges();
         }
 
         //TODO:

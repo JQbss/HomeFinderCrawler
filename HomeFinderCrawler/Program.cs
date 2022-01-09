@@ -5,27 +5,33 @@ using RequestsServices;
 
 namespace HomeFinderCrawler
 {
+    //TODO: Aplikacja nie powinna wyrzucać wyjątków, ale powinna logować wszystkie błędy do jakieś pliku, bądź może nawet tabeli skoro i tak już mamy stworzoną bazę danych
     public class Program
     {
         public static void Main(string[] args)
         {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             WebCrawler cr = new(new DataContext("DataSource=craw.db"));
 
             //Adding to database search template
             //cr.AddWebsite(AddOLXCrawler());
-            //cr.AddWebsite(AddGratkaWebsite());
+            cr.AddWebsite(AddGratkaWebsite());
             //cr.AddWebsite("https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/cala-polska", "a", "http://www.otodom.pl", 2, new Crawler_announcement() { Image_node_name = "img" });
             
 
             cr.ShowWebpages();
-            //cr.StartLinkAnnouncementCrawler();
-            //cr.StartAnnouncementsCrawler();
+            cr.StartLinkAnnouncementCrawler();
+            cr.StartAnnouncementsCrawler();
             cr.Start();
             cr.Stop();
 
             // Sending requests to server
             RequestsService rs = new();
-            rs.PostUrl = "https://webhook.site/6f2dba85-9c29-44b9-a274-f86e36295fc1";
+            rs.PostUrl = "https://webhook.site/4c97134c-cbf6-4ef0-a246-ded83f9ca632";
             List<Announcement> announcements = cr.AnnouncementToSend();
             rs.Login("email","password");
             rs.Send(announcements);
@@ -46,7 +52,11 @@ namespace HomeFinderCrawler
                 Image_class_name = "gallery__image",
                 Image_attribute_value = "src",
                 Description_class_name = "description__rolled",
-                Description_node_name = "div"
+                Description_node_name = "div",
+                Crawler_Website_Link_Contains = new List<Crawler_announcements_link_contains>()
+                { 
+                    new Crawler_announcements_link_contains() { Value = "gratka"}
+                }
             };
 
             return new Crawler_website()
@@ -72,7 +82,12 @@ namespace HomeFinderCrawler
                 Description_class_name = "css-g5mtbi-Text",
                 Description_node_name = "div",
                 Price_node_name = "h3",
-                Title_node_name = "h1"
+                Title_node_name = "h1",
+                Crawler_Website_Link_Contains = new List<Crawler_announcements_link_contains>()
+                { 
+                    new Crawler_announcements_link_contains(){ Value = "oferta"},
+                    new Crawler_announcements_link_contains{ Value = "http", IsContains = false}
+                }
             };
 
             return new Crawler_website()

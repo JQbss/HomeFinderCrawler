@@ -17,7 +17,11 @@ namespace DatabaseManager.Entities
 
         public string Link { get; set; }
         // home, apartment, garage... ... Bike
+        // TODO: To tutaj tak nie może działać -- na razie zrobić hardcode z typem ogłoszenia
         public Announcement_dictionary_item? Announcements_dictionary_item { get; set; }
+
+        //TODO: na razie jest tylko = "manssion"
+        public string? Announcement_type { get; set; }
 
         //sale, rent ...
         public Announcement_dictionary_category? Announcements_dictionary_category { get; set; }
@@ -41,7 +45,7 @@ namespace DatabaseManager.Entities
         [JsonIgnore]
         public bool Sent { get; set; } = false;
 
-        //TODO:
+        //TODO: Takie akcje nie powinny być wykonywane na encjach
         public bool Equals(Announcement? other)
         {
             if(other is null) return false;

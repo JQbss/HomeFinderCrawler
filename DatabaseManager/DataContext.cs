@@ -12,6 +12,8 @@ namespace DatabaseManager
         public DbSet<Announcements_dictionary_status> AnnouncementsDictionaryStatuses { get; set; }
         public DbSet<Crawler_website> CrawlerWebsites { get; set; }
         public DbSet<Announcement_manssion> AnnouncementManssions { get; set; }
+        public DbSet<Announcement_dictionary_mansion_properties> AnnouncementDictionaryMansionProperties { get; set; }
+        public DbSet<Announcement_manssion_synonyms> AnnouncementManssionSynonyms { get; set; }
 
         public DataContext(string source) => _source = source;
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

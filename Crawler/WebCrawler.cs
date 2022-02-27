@@ -176,12 +176,15 @@ namespace Crawler
                 //Sprawdzanie czy jest jakiś rekord w Announcement_manssion dla tej posesji
                 var announcement_Manssion = _databaseService.GetAnnouncementManssionByAnnouncemenetId(announcement.Id);
 
-                if (announcement_Manssion is null) announcement_Manssion = new Announcement_manssion();
-                announcement_Manssion.Announcement = _databaseService.GetAnnouncementById(announcement.Id);
-                DownloadManssionLevel(announcement, doc, announcement_Manssion);
-                //Pobieranie listy z parametrami
+                if (announcement_Manssion is null)
+                {
+                    announcement_Manssion = new Announcement_manssion();
+                    announcement_Manssion.Announcement = _databaseService.GetAnnouncementById(announcement.Id);
+                    DownloadManssionLevel(announcement, doc, announcement_Manssion);
+                    //Pobieranie listy z parametrami
 
-                _databaseService.AddAnnouncementManssion(announcement_Manssion);
+                    _databaseService.AddAnnouncementManssion(announcement_Manssion);
+                }
             }
         }
 
@@ -223,6 +226,28 @@ namespace Crawler
                     type_synonyms[0] = "typbudynku";
                     if (announcement_Manssion.Type_of_building is null)
                         announcement_Manssion.Type_of_building = SearchFirstSynonymValue(nod, type_synonyms);
+
+                    // TODO: Dane, które można pobrać
+                    // forma własności
+
+                    // Rok budowy
+                    string[] year_synonyms = new string[1];
+                    year_synonyms[0] = "Rok budowy".Replace(" ", "").ToLower();
+
+                  //  if (announcement_Manssion.Year_od_construction is null)
+                  //      announcement_Manssion.Year_od_construction = int.Parse(SearchFirstSynonymValue(nod, year_synonyms));
+
+                    // Liczba pokoi
+                    string[] room_synonyms = new string[1];
+                    room_synonyms[0] = "Liczba pokoi".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Room_count is null)
+                        announcement_Manssion.Room_count = SearchFirstSynonymValue(nod, room_synonyms);
+
+                    // Typ zabudowy
+                    string[] type_of_building = new string[1];
+                    room_synonyms[0] = "Liczba pokoi".Replace(" ", "").ToLower();
+
                 }
             }
         }
@@ -277,7 +302,9 @@ namespace Crawler
             }
 
             // Updating announcement
-            announcement.Processed = true;
+            
+            // TODO: Tymczasowo, żeby przetwarzać kilkra razy ogłoszenia
+            // announcement.Processed = true;
             _databaseService.SaveChanges();
         }
 
@@ -289,6 +316,14 @@ namespace Crawler
                     return true;
             }
             return false;
+        }
+
+        public void AddSynonymsPropertiesToWebsite(Announcement_manssion_synonyms[] announcement_Manssion_Synonyms)
+        {
+            // TODO: Or jeśli synonim już istnieje
+            if(announcement_Manssion_Synonyms is null) return;
+
+            _databaseService.AddSynonymPropertiesWebsite(announcement_Manssion_Synonyms[0]);
         }
 
         public void AddWebsite(Crawler_website website)

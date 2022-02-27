@@ -25,6 +25,10 @@ namespace DatabaseManager.Entities
         //TODO: Pytanie czy nie lpiej bdzie string bo może być w różych jednostkach podana ta powierzchnia
         public int? Area { get; set; }
 
+        // Rok budowy
+        public int? Year_od_construction { get; set; }
+
+
         //Lokalizacja
         public string? Localization { get; set; }
         //TODO: Mam tu wpisane, żę powinno bć id sprzedawcy, ale to nie prawda, id sprzedawcy powinno być w innej encji

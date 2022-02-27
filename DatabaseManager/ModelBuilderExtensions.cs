@@ -27,10 +27,51 @@ namespace DatabaseManager
                     new Announcement_dictionary_category() { Id = 1, Name = "Sprzedaż" },
                     new Announcement_dictionary_category() { Id = 2, Name = "Wynajem" }
                 );
-/*            modelBuilder.Entity<Crawler_website>().HasData
+            modelBuilder.Entity<Announcement_dictionary_mansion_properties>().HasData
                 (
-                    new Crawler_website() { Id = 1, Website = "olx.pl", Regex = "reg" }
-                );*/
+                    new Announcement_dictionary_mansion_properties() 
+                    { 
+                        Id = 1,
+                        Name = "RoomCount",
+                        Description = "Liczba pokoi w mieszkaniu"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 2,
+                        Name = "Level",
+                        Description = "Piętro na którym znajduje się mieszkanie"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 3,
+                        Name = "Furnished",
+                        Description = "Czy mieszkanie jest umeblowanie"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 4,
+                        Name = "TypeOfBuild",
+                        Description = "Typ budynku"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 5,
+                        Name = "Area",
+                        Description = "Miejsce"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 6,
+                        Name = "YearOfConstruction",
+                        Description = "Rok budowy mieszkania"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 7,
+                        Name = "Location",
+                        Description = "Lokacja nieruchomości"
+                    }
+                );
         }
     }
 }

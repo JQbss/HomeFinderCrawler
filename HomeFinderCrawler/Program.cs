@@ -21,34 +21,37 @@ namespace HomeFinderCrawler
             if (args is null)
             {
                 throw new ArgumentNullException(nameof(args));
-            }
+            } 
 
             WebCrawler cr = new(new DataContext("DataSource=craw.db"));
 
             //Adding to database search template
             //cr.AddWebsite(AddOLXCrawler());
-            //cr.AddWebsite(AddGratkaWebsite());
-            //cr.AddWebsite("https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/cala-polska", "a", "http://www.otodom.pl", 2, new Crawler_announcement() { Image_node_name = "img" });
+            cr.AddWebsite(AddGratkaWebsite());
             
+            // TODO: Do zrobienia są synonimy w sposób dynamiczny.
+            // AddGratkaSynonymsProperties()
 
-          /*  cr.ShowWebpages();
+            //cr.AddWebsite("https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/cala-polska", "a", "http://www.otodom.pl", 2, new Crawler_announcement() { Image_node_name = "img" });
+
+            cr.ShowWebpages();
             cr.StartLinkAnnouncementCrawler();
             cr.StartAnnouncementsCrawler();
             cr.Start();
-            cr.Stop();*/
+            cr.Stop();
 
             // Sending requests to server
-            RequestsService rs = new();
-            rs.PostUrl = "https://webhook.site/4c97134c-cbf6-4ef0-a246-ded83f9ca632";
-            rs.RegisterUrl = "http://localhost:8080/auth/register";
-            rs.LoginUrl = "http://localhost:8080/auth/login";
-            rs.AnnouncementsUrl = "http://localhost:8080/announcement";
-            List<Announcement> announcements = cr.AnnouncementToSend();
-            rs.AddErrorLogService(new ErrorLogService("log.txt"));
-            rs.StartErrorLogService();
-            rs.Register("patryk@elo.pl", "password");
-            rs.Login("patryk@elo.pl", "password");
-            rs.AddAnnouncements(announcements);
+            /*           RequestsService rs = new();
+                       rs.PostUrl = "https://webhook.site/4c97134c-cbf6-4ef0-a246-ded83f9ca632";
+                       rs.RegisterUrl = "http://localhost:8080/auth/register";
+                       rs.LoginUrl = "http://localhost:8080/auth/login";
+                       rs.AnnouncementsUrl = "http://localhost:8080/announcement";
+                       List<Announcement> announcements = cr.AnnouncementToSend();
+                       rs.AddErrorLogService(new ErrorLogService("log.txt"));
+                       rs.StartErrorLogService();
+                       rs.Register("patryk@elo.pl", "password");
+                       rs.Login("patryk@elo.pl", "password");
+                       rs.AddAnnouncements(announcements);*/
             //rs.Send(announcements);
 
             // If sending was successfull, i must update database
@@ -115,6 +118,20 @@ namespace HomeFinderCrawler
             _requestsService.AddAnnouncements(_webCrawler.AnnouncementToSend());
             Console.SetOut(backupOut);
             _isRunning = false;
+        }
+
+        private static void AddGratkaSynonymsProperties(Crawler_announcement ca, Announcement_dictionary_mansion_properties announcement_Dictionary_Mansion_Properties)
+        {
+            // TODO: 
+
+            Announcement_manssion_synonyms ams = new()
+            {
+                Crawler_Announcement = ca,
+                Announcement_dictionary_mansion_properties = announcement_Dictionary_Mansion_Properties,
+                Value = "lokalizacja"
+            };
+
+
         }
 
         private static Crawler_website AddGratkaWebsite()

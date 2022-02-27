@@ -136,6 +136,14 @@ namespace DatabaseManager
             return true;
         }
 
+        public bool AddSynonymPropertiesWebsite(Announcement_manssion_synonyms announcement_Manssion_Synonyms)
+        {
+            if (announcement_Manssion_Synonyms is null) return false;
+
+            _dbContext.AnnouncementManssionSynonyms.Add(announcement_Manssion_Synonyms);
+            return true;
+        }
+
         public bool AddCrawlerWebsite(Crawler_website crawler_Website)
         {
             if (crawler_Website is null) return false;

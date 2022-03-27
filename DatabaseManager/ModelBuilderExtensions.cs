@@ -70,7 +70,39 @@ namespace DatabaseManager
                         Id = 7,
                         Name = "Location",
                         Description = "Lokacja nieruchomości"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 8,
+                        Name = "Volume",
+                        Description = "Głośność nieruchomości"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 9,
+                        Name = "AdditionalArea",
+                        Description = "Dodatkowa powierzchnia"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 10,
+                        Name = "PricePerM2",
+                        Description = "Cena za metr kwadratowy"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 11,
+                        Name = "LandArea",
+                        Description = "Powierzchnia działki"
+                    },
+                    new Announcement_dictionary_mansion_properties()
+                    {
+                        Id = 12,
+                        Name = "Driveway",
+                        Description = "Droga dojazdowa do posesji"
                     }
+                    // TODO: Trzeba uwzględnić wszystkie kolumny, które dodałem
+
                 );
         }
     }

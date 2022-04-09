@@ -27,8 +27,9 @@ namespace HomeFinderCrawler
 
             //Adding to database search template
             //cr.AddWebsite(AddOLXCrawler());
-            cr.AddWebsite(AddGratkaWebsite());
-            
+            //cr.AddWebsite(AddGratkaWebsite());
+           // cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
+
             // TODO: Do zrobienia są synonimy w sposób dynamiczny.
             // AddGratkaSynonymsProperties()
 
@@ -60,6 +61,27 @@ namespace HomeFinderCrawler
             //CleanCrawlerSimulation();
         }
 
+        private static Announcement_manssion_synonyms[] AddGratkaManssionSynonyms(WebCrawler webCrawler)
+        {
+            List<Announcement_manssion_synonyms> announcement_Manssion_Synonyms = new();
+            Crawler_website cw = webCrawler.GetCrawlerAnnouncementId("https://gratka.pl/nieruchomosci?sort=newest");
+
+
+            // Liczba pokoi w mieszkaniu
+            announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+            {
+                Id = 1,
+                Value = "Liczba pokoi".Replace(" ", "").ToLower(),
+                Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId("RoomCount"),
+                Crawler_Website = cw
+            });
+
+            // Pobieranie strony gratki
+
+
+            return announcement_Manssion_Synonyms.ToArray();
+
+        }
 
         // Production Crawler Run Method
         private static void CleanCrawlerSimulation()
@@ -118,20 +140,6 @@ namespace HomeFinderCrawler
             _requestsService.AddAnnouncements(_webCrawler.AnnouncementToSend());
             Console.SetOut(backupOut);
             _isRunning = false;
-        }
-
-        private static void AddGratkaSynonymsProperties(Crawler_announcement ca, Announcement_dictionary_mansion_properties announcement_Dictionary_Mansion_Properties)
-        {
-            // TODO: 
-
-            Announcement_manssion_synonyms ams = new()
-            {
-                Crawler_Announcement = ca,
-                Announcement_dictionary_mansion_properties = announcement_Dictionary_Mansion_Properties,
-                Value = "lokalizacja"
-            };
-
-
         }
 
         private static Crawler_website AddGratkaWebsite()

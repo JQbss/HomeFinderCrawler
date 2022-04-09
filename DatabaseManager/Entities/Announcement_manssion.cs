@@ -24,8 +24,7 @@ namespace DatabaseManager.Entities
         public int? Rent_price { get; set; }
 
         //Powierzchnia 
-        //TODO: Pytanie czy nie lpiej bdzie string bo może być w różych jednostkach podana ta powierzchnia
-        public int? Area { get; set; }
+        public double? Area { get; set; }
 
         // Rok budowy
         public int? Year_od_construction { get; set; }

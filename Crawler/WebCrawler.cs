@@ -188,10 +188,9 @@ namespace Crawler
             }
         }
 
+        // Pobieranie danych o ogłoszeniu
         private void DownloadManssionLevel(Announcement announcement, HtmlDocument doc, Announcement_manssion announcement_Manssion)
         {
-            Console.WriteLine("POBIERANIE LEVELU REZYDENCJI");
-
             //TODO: To można zrobić zupełnie uniwersalnie dla portali i szukać tylko w tej tablicy odpowiednich wzorców
             HtmlNode[] nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
 
@@ -218,9 +217,11 @@ namespace Crawler
                     string[] area_synonyms = new string[1];
                     area_synonyms[0] = "powierzchniawm2";
 
-                    //TODO: Trzeba zrobić castowanie danych
-                   /* if (announcement_Manssion.Area is null)
-                        announcement_Manssion.Area = SearchFirstSynonymValue(nod, area_synonyms);*/
+                    //TODO: Zły format danych w bazie - ogarnia tylko liczy c
+                    if (announcement_Manssion.Area is null)
+                    {
+                        announcement_Manssion.Area = SearchFirstSynonymValue(nod, area_synonyms) is null ? null: double.Parse(SearchFirstSynonymValue(nod, area_synonyms).Replace("m2",""));
+                    }
 
                     string[] type_synonyms = new string[1];
                     type_synonyms[0] = "typbudynku";
@@ -234,12 +235,16 @@ namespace Crawler
                     string[] year_synonyms = new string[1];
                     year_synonyms[0] = "Rok budowy".Replace(" ", "").ToLower();
 
-                  //  if (announcement_Manssion.Year_od_construction is null)
-                  //      announcement_Manssion.Year_od_construction = int.Parse(SearchFirstSynonymValue(nod, year_synonyms));
+                    if (announcement_Manssion.Year_od_construction is null)
+                        announcement_Manssion.Year_od_construction = SearchFirstSynonymValue(nod, year_synonyms) is null ? null: int.Parse(SearchFirstSynonymValue(nod, year_synonyms));
 
                     // Liczba pokoi
                     string[] room_synonyms = new string[1];
                     room_synonyms[0] = "Liczba pokoi".Replace(" ", "").ToLower();
+
+                    // TODO: Tutaj muszęwiedzieć jakie jest CrawlerWebsiteId
+
+                    //string[] room_synonyms = _databaseService.GetAnnouncementMansionSynonyms()
 
                     if (announcement_Manssion.Room_count is null)
                         announcement_Manssion.Room_count = SearchFirstSynonymValue(nod, room_synonyms);
@@ -247,6 +252,158 @@ namespace Crawler
                     // Typ zabudowy
                     string[] type_of_building = new string[1];
                     room_synonyms[0] = "Liczba pokoi".Replace(" ", "").ToLower();
+
+                    // Cena wynajmu
+                    string[] Rent_price_synonyms = new string[1];
+
+                    string[] year_of_construction_synonyms = new string[1];
+
+
+
+                    // Głośność mieszkania - na razie z gratki
+                    // TODO: TEST
+                    string[] volume_synonyms = new string[1];
+                    volume_synonyms[0] = "Głośność".Replace(" ", "").ToLower();
+
+                    if(announcement_Manssion.Volume is null)
+                    {
+                        announcement_Manssion.Volume = SearchFirstSynonymValue(nod, volume_synonyms);
+                    }
+
+                    // Powierzchnia dodatkowa z gratki = Tutaj może być ich przecież wiele
+                    string[] additional_area_synonyms = new string[1];
+                    
+
+                    string[] price_per_m2_synonyms = new string[1];
+
+
+
+
+                    // Powierzchnia działki w metrach kwaratowych
+                    string[] land_area_synonyms = new string[1];
+                    land_area_synonyms[0] = "Powierzchnia działki w m2".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Land_area is null)
+                        announcement_Manssion.Land_area = SearchFirstSynonymValue(nod, land_area_synonyms);
+
+                    // Droga dojazdowa z gratki
+                    string[] driveway_synonyms = new string[1];
+                    driveway_synonyms[0] = "Droga dojazdowa".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Driveway is null)
+                        announcement_Manssion.Driveway = SearchFirstSynonymValue(nod, driveway_synonyms);
+
+                    // Stan nieruchomości z gratki
+                    string[] state_synonyms = new string[1];
+                    state_synonyms[0] = "Stan".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.State is null)
+                        announcement_Manssion.State = SearchFirstSynonymValue(nod, state_synonyms);
+
+
+                    // Ogrzewanie i energia z gratki
+                    string[] heating_and_energy_synonyms = new string[1];
+                    heating_and_energy_synonyms[0] = "Ogrzewanie i energia".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Heating_and_energy is null)
+                        announcement_Manssion.Heating_and_energy = SearchFirstSynonymValue(nod, heating_and_energy_synonyms);
+
+
+                    // Media z gratki
+                    string[] media_synonyms = new string[1];
+                    media_synonyms[0] = "Media".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Media is null)
+                        announcement_Manssion.Media = SearchFirstSynonymValue(nod, media_synonyms);
+
+
+                    // Ogrodzenie działki z gratki
+                    string[] fence_of_the_plot_synonyms = new string[1];
+                    fence_of_the_plot_synonyms[0] = "Ogrodzenie działki".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Fence_of_the_plot is null)
+                        announcement_Manssion.Fence_of_the_plot = SearchFirstSynonymValue(nod, fence_of_the_plot_synonyms);
+
+
+                    string[] shape_of_the_plot_synonyms = new string[1];
+
+                    string[] apperance_synonyms = new string[1];
+
+
+                    // Liczba stanowisk w garażu
+                    string[] number_of_position_synonyms = new string[1];
+                    number_of_position_synonyms[0] = "Liczba stanowisk".Replace(" ", "").ToLower();
+
+                    if (announcement_Manssion.Number_of_positions is null)
+                        announcement_Manssion.Number_of_positions = SearchFirstSynonymValue(nod, number_of_position_synonyms);
+
+                    // Materiał budynku z Gratki
+                    string[] building_material_synonyms = new string[1];
+                    building_material_synonyms[0] = "Materiał budynku".Replace(" ", "").ToLower();
+
+                    if(announcement_Manssion.Building_material is null)
+                        announcement_Manssion.Building_material = SearchFirstSynonymValue(nod, building_material_synonyms);
+
+                    string[] air_condition_synonyms = new string[1];
+
+                    string[] balcony_synonyms = new string[1];
+
+                    string[] basement_synonyms = new string[1];
+
+                    string[] garage_synonyms = new string[1];
+
+                    string[] garden_synonyms = new string[1];
+
+                    string[] lift_synonyms = new string[1];
+
+                    string[] non_smoking_only_synonyms = new string[1];
+
+                    string[] separate_kitchen_synonyms = new string[1];
+
+                    string[] terrace_synonyms = new string[1];
+
+                    string[] two_storeys_synonyms = new string[1];
+
+                    string[] asphalt_access_synonyms = new string[1];
+
+                    string[] heating_synonyms = new string[1];
+
+                    // TODO: Miejsce parkingowe z gratki
+                    // TODO: Do przetestowania - nie wiem czy boolean to jest tutaj dobry pomysł, albo niech będzie boolean który możę mieć null
+                    string[] parking_synonyms = new string[1];
+                    parking_synonyms[0] = "Miejsce parkingowe".Replace(" ", "").ToLower();
+
+                    if (!announcement_Manssion.Parking)
+                        announcement_Manssion.Parking = SearchFirstSynonymValue(nod, parking_synonyms) is null ? false : true;
+
+
+                    string[] site_synonyms = new string[1];
+
+                    string[] type_of_roof_synonyms = new string[1];
+
+                    string[] bungalow_synonyms = new string[1];
+
+                    string[] recreational_synonyms = new string[1];
+
+                    string[] investment_status_synonyms = new string[1];
+
+                    string[] internet_synonyms = new string[1];
+
+                    string[] cable_tv_synonyms = new string[1];
+
+                    string[] phone_synonyms = new string[1];
+
+                    string[] preferences_synonyms = new string[1];
+
+                    string[] market_synonyms = new string[1];
+
+                    // TODO: Jest jeszcze na gratce właściwość OKNA
+                    // TODO: Jest jeszcze właściwość: Czy mieszkanie ma łazienkę.
+                    // TODO: Jest jeszcze liczba miejsc parkingowych
+                    // TODO: User może zacznaczyć wiele obiektów w pobliżu.
+                    // TODO: Czy jest prąd, czy jest gazm czy jest woda
+                    // TODO: Kanalizacja
+                    // TODO: Garaże mogą mieć jeszcze pole: konstrukcja
 
                 }
             }
@@ -318,12 +475,36 @@ namespace Crawler
             return false;
         }
 
+        /// <summary>
+        /// Dodawanie synonimów do strony internetowej
+        /// </summary>
+        /// <param name="announcement_Manssion_Synonyms">Tablica synonimów</param>
         public void AddSynonymsPropertiesToWebsite(Announcement_manssion_synonyms[] announcement_Manssion_Synonyms)
         {
             // TODO: Or jeśli synonim już istnieje
             if(announcement_Manssion_Synonyms is null) return;
 
-            _databaseService.AddSynonymPropertiesWebsite(announcement_Manssion_Synonyms[0]);
+            foreach(var synonym in announcement_Manssion_Synonyms)
+            {
+                _databaseService.AddSynonymPropertiesWebsite(synonym);
+            }
+
+            _databaseService.SaveChanges();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="property_name"></param>
+        /// <returns></returns>
+        public Announcement_dictionary_mansion_properties GetAnnouncementMansionSynonymPropertiesId(string property_name)
+        {
+            return _databaseService.GetAnnonuncementDictionaryMansionPropertiesId(property_name);
+        }
+
+        public Crawler_website GetCrawlerAnnouncementId(string webName)
+        {
+            return _databaseService.GetCrawlerAnnouncementId(webName);
         }
 
         public void AddWebsite(Crawler_website website)

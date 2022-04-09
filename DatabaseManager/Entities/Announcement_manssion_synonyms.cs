@@ -7,10 +7,10 @@ namespace DatabaseManager.Entities
         public int Id { get; set; }
         public string Value { get; set; }
 
-        [ForeignKey("CrawlerAnnouncementId")]
-        public virtual Crawler_announcement Crawler_Announcement { get; set; }
+        [ForeignKey("CrawlerWebsiteId")]
+        public virtual Crawler_website Crawler_Website { get; set; }
 
-        [ForeignKey("AnnouncementDictionaryManssionProperties")]
+        [ForeignKey("AnnouncementDictionaryManssionPropertiesId")]
         public virtual Announcement_dictionary_mansion_properties Announcement_dictionary_mansion_properties { get; set; }
     }
 }

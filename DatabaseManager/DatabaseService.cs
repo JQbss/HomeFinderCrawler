@@ -13,6 +13,19 @@ namespace DatabaseManager
             _dbContext.Database.EnsureCreated();
         }
 
+        public Crawler_website GetCrawlerAnnouncementId(string web_name)
+        {
+            return _dbContext.CrawlerWebsites
+                .Where(x => x.Website == web_name)
+                .FirstOrDefault();
+        }
+        public Announcement_dictionary_mansion_properties GetAnnonuncementDictionaryMansionPropertiesId(string property_name)
+        {
+            return _dbContext.AnnouncementDictionaryMansionProperties
+                .Where(x => x.Name == property_name)
+                .FirstOrDefault();
+        }
+
         //
         // SELECT by id
         //

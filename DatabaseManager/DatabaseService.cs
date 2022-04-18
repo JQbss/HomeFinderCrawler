@@ -13,13 +13,13 @@ namespace DatabaseManager
             _dbContext.Database.EnsureCreated();
         }
 
-        public Crawler_website GetCrawlerAnnouncementId(string web_name)
+        public Crawler_website? GetCrawlerAnnouncementId(string web_name)
         {
             return _dbContext.CrawlerWebsites
                 .Where(x => x.Website == web_name)
                 .FirstOrDefault();
         }
-        public Announcement_dictionary_mansion_properties GetAnnonuncementDictionaryMansionPropertiesId(string property_name)
+        public Announcement_dictionary_mansion_properties? GetAnnonuncementDictionaryMansionPropertiesId(string property_name)
         {
             return _dbContext.AnnouncementDictionaryMansionProperties
                 .Where(x => x.Name == property_name)
@@ -29,39 +29,61 @@ namespace DatabaseManager
         //
         // SELECT by id
         //
-        public Image GetImageById(int id)
+        public Image? GetImageById(int id)
         {
             return _dbContext.Images
                 .Where(x => x.Id == id)
                 .FirstOrDefault();
         }
 
-        public Announcement GetAnnouncementById(int id)
+        public Announcement? GetAnnouncementById(int id)
         {
             return _dbContext.Announcements
                 .Where(x =>x.Id == id)
                 .FirstOrDefault();
         }
 
-        public Announcements_dictionary_status GetAnnouncementsDictionaryStatus(int id)
+        public Announcements_dictionary_status? GetAnnouncementsDictionaryStatus(int id)
         {
             return _dbContext.AnnouncementsDictionaryStatuses
                 .Where(x => x.Id == id)
                 .FirstOrDefault();
         }
 
-        public Crawler_website GetCrawlerWebsiteById(int id)
+        public Crawler_website? GetCrawlerWebsiteById(int id)
         {
             return _dbContext.CrawlerWebsites
                 .Where(x => x.Id == id)
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// Funkcja zwracąca synonimy
+        /// </summary>
+        /// <param name="Synonym_name">Wartość właściwości</param>
+        /// <returns>Zwraca tablicę z synonimamy dla danych właściwości nieruchomości</returns>
+        public string[] GetAnnouncementsManssionSynonyms(string Synonym_name, int WebSite_ID)
+        {
+            return _dbContext.AnnouncementManssionSynonyms
+                .Include(x => x.Announcement_dictionary_mansion_properties)
+                .Where(x => x.Announcement_dictionary_mansion_properties.Name.Equals(Synonym_name) && x.Crawler_Website.Id == WebSite_ID)
+                .Select(x => x.Value)
+                .ToArray();
+        }
+
+        public int GetAnnonucementCrawlerWebsiteId(int AnnouncementID)
+        {
+            return _dbContext.Announcements
+                .Where(x => x.Id == AnnouncementID)
+                .Include(x => x.Crawler_Website)
+                .Select(x => x.Crawler_Website.Id)
+                .FirstOrDefault();
+        }
         //
         // SELECT by link
         //
 
-        public Announcement GetAnnouncementByLink(string link)
+        public Announcement? GetAnnouncementByLink(string link)
         {
             return _dbContext.Announcements
                 .Include(x => x.Images)
@@ -98,7 +120,7 @@ namespace DatabaseManager
 
 
         //SELECT BY URL
-        public Crawler_website GetCrawlerWebsiteByUrl(string url)
+        public Crawler_website? GetCrawlerWebsiteByUrl(string url)
         {
             return _dbContext.CrawlerWebsites
                 .Include(x => x.Crawler_Announcement)
@@ -106,8 +128,22 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        // Funkcja sprawdzająca czy istnieje już podany synonim.
+        public bool CheckSynonymExists(int CrawlerWebsiteID, int AnnouncementDictionaryMansionPropertiesId, string SynonymValue)
+        {
+            if (SynonymValue == null || SynonymValue.Length == 0)
+                return false;
+
+            // Sprawdznie czy synonim istnieje
+            var tmp = _dbContext.AnnouncementManssionSynonyms
+                .Where(x => x.Value == SynonymValue && x.Crawler_Website.Id == CrawlerWebsiteID && x.Announcement_dictionary_mansion_properties.Id == AnnouncementDictionaryMansionPropertiesId)
+                .FirstOrDefault();
+
+            return tmp is not null ? true : false;
+        }
+
         //SELECT * FROM ANNOUNCEMENT MANSSION BY ANNOUNCEMENT ID
-        public Announcement_manssion GetAnnouncementManssionByAnnouncemenetId(int AnnouncemenetId)
+        public Announcement_manssion? GetAnnouncementManssionByAnnouncemenetId(int AnnouncemenetId)
         {
             return _dbContext.AnnouncementManssions
                 .Where(x => x.Announcement.Id == AnnouncemenetId)

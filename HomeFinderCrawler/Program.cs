@@ -25,10 +25,10 @@ namespace HomeFinderCrawler
 
             WebCrawler cr = new(new DataContext("DataSource=craw.db"));
 
-            //Adding to database search template
-            //cr.AddWebsite(AddOLXCrawler());
-            //cr.AddWebsite(AddGratkaWebsite());
-           // cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
+            // Adding to database search template
+            // cr.AddWebsite(AddOLXCrawler());
+            // cr.AddWebsite(AddGratkaWebsite());
+            // cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
 
             // TODO: Do zrobienia są synonimy w sposób dynamiczny.
             // AddGratkaSynonymsProperties()
@@ -63,24 +63,48 @@ namespace HomeFinderCrawler
 
         private static Announcement_manssion_synonyms[] AddGratkaManssionSynonyms(WebCrawler webCrawler)
         {
+            // Tworzenie listy synonimów
             List<Announcement_manssion_synonyms> announcement_Manssion_Synonyms = new();
             Crawler_website cw = webCrawler.GetCrawlerAnnouncementId("https://gratka.pl/nieruchomosci?sort=newest");
 
-
-            // Liczba pokoi w mieszkaniu
-            announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+            // Listy z wartościami do dodania
+            string[] Properties = new string[]
             {
-                Id = 1,
-                Value = "Liczba pokoi".Replace(" ", "").ToLower(),
-                Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId("RoomCount"),
-                Crawler_Website = cw
-            });
+                "RoomCount", "Level", "Furnished", "TypeOfBuild", "Area",
+                "YearOfConstruction", "Location", "Volume", "AdditionalArea", "PricePerM2",
+                "LandArea", "Driveway", "State", "HeatingAndEnergy", "Media",
+                "FenceOfThePlot", "ShapeOfThePlot", "c", "NumberOfPositions", "BuildingMaterial",
+                "Air_conditioning", "Balcony", "Basement", "Garage", "Garden",
+                "Lift", "NonSmokingOnly", "SeparateKitchen", "Terrace", "TwoStoreys",
+                "UtilityRoom", "AsphaltAccess", "Heating", "Parking", "Site",
+                "TypeOfRoof", "Bungalow", "Recreational", "InvestmentStatus", "Internet",
+                "CableTV", "Phone", "Preferences", "Market"
+            };
 
-            // Pobieranie strony gratki
-
-
+            string[] values = new string[]
+            {
+                "Liczba pokoi", "Liczba pięter w budynku", "", "typbudynku", "", 
+                "Rok budowy", "lokalizacja", "Głośność", "", "",
+                "Powierzchnia działki w m2", "Droga dojazdowa", "Stan", "Ogrzewanie i energia", "Media",
+                "Ogrodzenie działki", "", "", "Liczba stanowisk", "Materiał budynku",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "Miejsce parkingowe", "",
+                "", "", "", "", "",
+                "", "", "", ""
+            };
+            
+            for(int i = 0; i < Properties.Length; i++)
+            {
+                announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+                {
+                    Id = i+1,
+                    Value = values[i].Replace(" ", "").ToLower(),
+                    Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId(Properties[i]),
+                    Crawler_Website = cw
+                });
+            }
             return announcement_Manssion_Synonyms.ToArray();
-
         }
 
         // Production Crawler Run Method

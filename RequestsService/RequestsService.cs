@@ -16,7 +16,6 @@ namespace RequestsServices
         private HttpClient _httpClient = new();
 
         public string PostUrl { get; set; } = string.Empty;
-
         public string UsersURL { get; set; } = string.Empty;
         public string AnnouncementsUrl { get; set; } = string.Empty;
         public string LoginUrl { get; set; } = string.Empty;
@@ -115,13 +114,112 @@ namespace RequestsServices
             _token = string.Empty;
         }
 
+
+        // Przeciążenie funkcji
+        public bool Send(List<Announcement_manssion> announcement_Manssions)
+        {
+            // Tutaj powinno być tylko przygotowanie pliku
+            if (PostUrl == String.Empty || announcement_Manssions is null || announcement_Manssions.Count is 0) return false;
+
+            JsonSerializerSettings options = new()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+
+            List<JObject> oblist = new();
+
+            // Tylko serializacja ogłoszenia
+            foreach( Announcement_manssion addMann in announcement_Manssions)
+            {
+                if (addMann is not null)
+                {
+                    var result = JObject.Parse(JsonConvert.SerializeObject(addMann, options));
+                    result.Merge(JObject.Parse(JsonConvert.SerializeObject(addMann.Announcement, options)));
+
+                    // Creating address to json
+                    // This should be in database
+                    if (addMann.Localization is not null)
+                    {
+                        string[] address = addMann.Localization.Split(',');
+
+                        if (address is not null && address.Length > 2)
+                        {
+                            var add =
+                            new
+                            {
+                                address =
+                                new
+                                {
+                                    miejscowosc = address[0],
+                                    powiat = address[1],
+                                    wojewodztwo = address[2]
+                                }
+                            };
+                            result.Merge(JObject.Parse(JsonConvert.SerializeObject(add, options).ToString()));
+                        }
+                    }
+
+
+                    // Tworzenie listy obrazów
+                    // To jest mało wydajne, bo robię listę przez Add
+                    List<string> imagesList = new();
+                    if (imagesList is not null && imagesList.Count != 0)
+                    {
+                        foreach (var img in addMann.Announcement.Images)
+                            imagesList.Add(img.Url);
+
+                        result.Merge(JObject.Parse(("{imageLinks: " + JsonConvert.SerializeObject(imagesList, options).ToString() + "}")));
+                    }
+
+                    oblist.Add(result);
+                }
+
+            }
+            SendJson(JsonConvert.SerializeObject(oblist, options).ToString());
+            return true;
+        }
+
+        private bool SendJson(string json)
+        {
+            StringContent sc = new(json, Encoding.UTF8, "application/json");
+            try
+            {
+                HttpResponseMessage response = _httpClient.PostAsync(PostUrl, sc).Result;
+
+                response.Content.ReadAsStringAsync();
+
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    Console.WriteLine("WORK");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("NOT WORK");
+                    _logService?.AddLog(_applicationModuleName + "PostStatusCode:" + response.StatusCode);
+                }
+                return false;
+            }
+            catch (Exception e)
+            {
+                _logService?.AddLog(_applicationModuleName + "Exception:" + e.Message);
+                return false;
+            }
+        }
+
+
         public bool Send(List<Announcement> announcements)
         {
-            if (PostUrl == string.Empty || !_isLogged) return false;
+            if (PostUrl == string.Empty /*|| !_isLogged*/) return false;
 
-            JsonSerializerSettings options = new() { NullValueHandling = NullValueHandling.Ignore };
-            options.Formatting = Formatting.Indented;
-            options.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            JsonSerializerSettings options = new()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
 
             string result = JsonConvert.SerializeObject(announcements, options);
             Console.WriteLine(result);
@@ -138,6 +236,7 @@ namespace RequestsServices
                     Console.WriteLine("WORK!");
                     return true;
                 }
+                else Console.WriteLine(response.StatusCode);
                 return false;
             }
             catch (Exception e)
@@ -155,6 +254,7 @@ namespace RequestsServices
                 return false;
             }
 
+            Console.WriteLine("Pętla");
             foreach(Announcement announcement in announcements)
                 AddAnnouncement(announcement);
 
@@ -169,6 +269,8 @@ namespace RequestsServices
             json.Add("title", announcement.Title);
             json.Add("link", announcement.Link);
 
+            Console.WriteLine("Zaczynamy");
+            Console.WriteLine(json.ToString());
             StringContent sc = new(json.ToString(), Encoding.UTF8, "application/json");
 
             try
@@ -176,6 +278,7 @@ namespace RequestsServices
                 HttpResponseMessage response = _httpClient.PostAsync(AnnouncementsUrl, sc).Result;
                 var content = response.Content.ReadAsStringAsync();
 
+                Console.WriteLine(response.StatusCode);
                 if (response.StatusCode == System.Net.HttpStatusCode.Created)
                 {
                     _logService?.AddLog(_applicationModuleName + "Succesfull send announcement id:" + announcement.Id);
@@ -184,6 +287,7 @@ namespace RequestsServices
                 }
                 else
                 {
+                    Console.WriteLine("error");
                     _logService?.AddLog(_applicationModuleName + "Failed send announcement id:" + announcement.Id + " Content:" + content.Result.ToString());
                     return false;
                 }

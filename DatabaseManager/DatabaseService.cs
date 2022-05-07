@@ -91,6 +91,19 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        public List<Announcement_manssion> GetAnnouncementManssion()
+        {
+            return _dbContext.AnnouncementManssions.ToList();
+        }
+
+        public List<Announcement_manssion> GetAnnouncementManssionBySendAndProcessed(bool sent, bool processed = true)
+        {
+            return _dbContext.AnnouncementManssions
+                .Include(x => x.Announcement)
+                .Include(x => x.Announcement.Images)
+                .Where(x => x.Announcement.Sent == sent && x.Announcement.Processed == processed).ToList();
+        }
+
         //
         // SELECT by sent
         //

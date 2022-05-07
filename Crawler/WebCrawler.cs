@@ -26,9 +26,14 @@ namespace Crawler
             _isRunning = true;
         }
 
+        public List<Announcement_manssion> AnnouncementManssionsToSend()
+        {
+            return _databaseService.GetAnnouncementManssionBySendAndProcessed(false, false);
+        }
+
         public List<Announcement> AnnouncementToSend()
         {
-            return _databaseService.GetAnnouncementsBySentAndProcessed(false, true);
+            return _databaseService.GetAnnouncementsBySentAndProcessed(false, false);
         }
 
         public void AnnoundementSend(List<Announcement> announcements)
@@ -191,11 +196,13 @@ namespace Crawler
         private void DownloadManssionLevel(Announcement announcement, HtmlDocument doc, Announcement_manssion announcement_Manssion)
         {
             int websiteID = _databaseService.GetAnnonucementCrawlerWebsiteId(announcement_Manssion.Announcement.Id);
-            // TODO: To można zrobić zupełnie uniwersalnie dla portali i szukać tylko w tej tablicy odpowiednich wzorców
-            // Wydaje mi się, że te portale z założenia 
-            HtmlNode[] nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
+            // TODO: Trzeba zrobić do tego reguły.
+                HtmlNode[] nodes; 
+            if (announcement.Crawler_Website.Id == 1)
+                    nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
+            else
+                nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("css-sfcl1s")).ToArray();
 
-            //TODO: Trzeba dodać do bazy danych odpowiednią tabelę, która ogarnie te synonimy i będzie wrzucać do odopwiednich danych -- na razie zasymuluję to tablicami
             foreach (var node in nodes)
             {
                 //Teraz trzeba zrobić pętle po li
@@ -241,8 +248,6 @@ namespace Crawler
 
                     // Cena wynajmu
                     string[] Rent_price_synonyms = new string[1];
-
-                    string[] year_of_construction_synonyms = new string[1];
 
                     // Głośność mieszkania
                     string[] volume_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Volume", websiteID);
@@ -306,29 +311,53 @@ namespace Crawler
                     if(announcement_Manssion.Building_material is null)
                         announcement_Manssion.Building_material = SearchFirstSynonymValue(nod, building_material_synonyms);
 
-                    string[] air_condition_synonyms = new string[1];
+                    string[] air_condition_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Air_conditioning", websiteID);
+                    if (!announcement_Manssion.Air_conditioning)
+                        announcement_Manssion.Air_conditioning = SearchFirstSynonymValue(nod, air_condition_synonyms) is null ? false : true;
 
-                    string[] balcony_synonyms = new string[1];
+                    string[] balcony_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Balcony", websiteID);
+                    if (!announcement_Manssion.Balcony)
+                        announcement_Manssion.Balcony = SearchFirstSynonymValue(nod, balcony_synonyms) is null ? false : true;
 
-                    string[] basement_synonyms = new string[1];
+                    string[] basement_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Basement", websiteID);
+                    if (!announcement_Manssion.Basement)
+                        announcement_Manssion.Basement = SearchFirstSynonymValue(nod, basement_synonyms) is null ? false : true;
 
-                    string[] garage_synonyms = new string[1];
+                    string[] garage_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Garage", websiteID);
+                    if (!announcement_Manssion.Garage)
+                        announcement_Manssion.Garage = SearchFirstSynonymValue(nod, garage_synonyms) is null ? false : true;
 
-                    string[] garden_synonyms = new string[1];
+                    string[] garden_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Garden", websiteID);
+                    if (!announcement_Manssion.Garden)
+                        announcement_Manssion.Garden = SearchFirstSynonymValue(nod, garden_synonyms) is null ? false : true;
 
-                    string[] lift_synonyms = new string[1];
+                    string[] lift_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Lift", websiteID);
+                    if (!announcement_Manssion.Lift)
+                        announcement_Manssion.Lift = SearchFirstSynonymValue(nod, lift_synonyms) is null ? false : true;
 
-                    string[] non_smoking_only_synonyms = new string[1];
+                    string[] non_smoking_only_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("NonSmokingOnly", websiteID);
+                    if (!announcement_Manssion.Non_smoking_only)
+                        announcement_Manssion.Non_smoking_only = SearchFirstSynonymValue(nod, non_smoking_only_synonyms) is null ? false : true;
 
-                    string[] separate_kitchen_synonyms = new string[1];
+                    string[] separate_kitchen_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("SeparateKitchen", websiteID);
+                    if (!announcement_Manssion.Separate_kitchen)
+                        announcement_Manssion.Separate_kitchen = SearchFirstSynonymValue(nod, separate_kitchen_synonyms) is null ? false : true;
 
-                    string[] terrace_synonyms = new string[1];
+                    string[] terrace_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Terrace", websiteID);
+                    if (!announcement_Manssion.Terrace)
+                        announcement_Manssion.Terrace = SearchFirstSynonymValue(nod, terrace_synonyms) is null ? false : true;
 
-                    string[] two_storeys_synonyms = new string[1];
+                    string[] two_storeys_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("TwoStoreys", websiteID);
+                    if (!announcement_Manssion.Two_storeys)
+                        announcement_Manssion.Two_storeys = SearchFirstSynonymValue(nod, two_storeys_synonyms) is null ? false : true;
 
-                    string[] asphalt_access_synonyms = new string[1];
+                    string[] asphalt_access_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("AsphaltAccess", websiteID);
+                    if (!announcement_Manssion.Asphalt_access)
+                        announcement_Manssion.Asphalt_access = SearchFirstSynonymValue(nod, asphalt_access_synonyms) is null ? false : true;
 
-                    string[] heating_synonyms = new string[1];
+                    string[] heating_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Heating", websiteID);
+                    if (!announcement_Manssion.Heating)
+                        announcement_Manssion.Heating = SearchFirstSynonymValue(nod, heating_synonyms) is null ? false : true;
 
                     // TODO: Miejsce parkingowe z gratki
                     // TODO: Do przetestowania - nie wiem czy boolean to jest tutaj dobry pomysł, albo niech będzie boolean który możę mieć null
@@ -337,13 +366,21 @@ namespace Crawler
                         announcement_Manssion.Parking = SearchFirstSynonymValue(nod, parking_synonyms) is null ? false : true;
 
 
-                    string[] site_synonyms = new string[1];
+                    string[] site_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Site", websiteID);
+                    if (!announcement_Manssion.Site)
+                        announcement_Manssion.Site = SearchFirstSynonymValue(nod, site_synonyms) is null ? false : true;
 
-                    string[] type_of_roof_synonyms = new string[1];
+                    string[] type_of_roof_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("TypeOfRoof", websiteID);
+                    if (announcement_Manssion.Type_of_roof is null)
+                        announcement_Manssion.Type_of_roof = SearchFirstSynonymValue(nod, type_of_roof_synonyms);
 
-                    string[] bungalow_synonyms = new string[1];
+                    string[] bungalow_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Bungalow", websiteID);
+                    if (!announcement_Manssion.Bungalow)
+                        announcement_Manssion.Bungalow = SearchFirstSynonymValue(nod, bungalow_synonyms) is null ? false : true;
 
-                    string[] recreational_synonyms = new string[1];
+                    string[] recreational_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Recreational", websiteID);
+                    if (!announcement_Manssion.Recreational)
+                        announcement_Manssion.Recreational = SearchFirstSynonymValue(nod, recreational_synonyms) is null ? false : true;
 
                     string[] investment_status_synonyms = new string[1];
 
@@ -351,7 +388,9 @@ namespace Crawler
 
                     string[] cable_tv_synonyms = new string[1];
 
-                    string[] phone_synonyms = new string[1];
+                    string[] phone_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Phone", websiteID);
+                    if (!announcement_Manssion.Phone)
+                        announcement_Manssion.Phone = SearchFirstSynonymValue(nod, phone_synonyms) is null ? false : true;
 
                     string[] preferences_synonyms = new string[1];
 
@@ -372,18 +411,22 @@ namespace Crawler
         // TODO: Zrobić to porządnie, żeby nie ucinała tekstu i spacji i tym podobne
         private string SearchFirstSynonymValue(HtmlNode node, string[] synonyms)
         {
-            foreach (string synonym in synonyms.Where(x => x is not null && synonyms.Length != 0))
+            if (synonyms is not null)
             {
-                string text = node.InnerText.Replace(" ", "").ToLower();
-                if (text.Contains(synonym))
+                foreach (string synonym in synonyms.Where(x => x is not null && synonyms.Length != 0))
                 {
-                    text = text.Replace(synonym, "").Trim();
-                    Console.WriteLine(text);
-                    return text;
+                    string text = node.InnerText.Replace(" ", "").ToLower();
+                    if (text.Contains(synonym))
+                    {
+                        text = text.Replace(synonym, "").Trim();
+                        Console.WriteLine(text);
+                        return text;
+                    }
                 }
-            }
 
-            // TODO: Tutaj można ogarnąć, żeby przerobić to na string.empty
+                // TODO: Tutaj można ogarnąć, żeby przerobić to na string.empty
+                return null;
+            }
             return null;
         }
 
@@ -448,15 +491,18 @@ namespace Crawler
         public void AddSynonymsPropertiesToWebsite(Announcement_manssion_synonyms[] announcement_Manssion_Synonyms)
         {
             // Sprawdzanie czy tablica nie jesst pusta
-            if(announcement_Manssion_Synonyms is null || announcement_Manssion_Synonyms.Length == 0)
+            if(announcement_Manssion_Synonyms is null || announcement_Manssion_Synonyms.Length is 0)
                 return;
 
             foreach(var synonym in announcement_Manssion_Synonyms)
             {
-                // Sprawdzanie czy synonim jest już w bazie danych
-                bool exists = _databaseService.CheckSynonymExists(synonym.Crawler_Website.Id, synonym.Announcement_dictionary_mansion_properties.Id, synonym.Value);
-                if (!exists)
-                    _databaseService.AddSynonymPropertiesWebsite(synonym);
+                if (synonym is not null)
+                {
+                    // Sprawdzanie czy synonim jest już w bazie danych
+                    bool exists = _databaseService.CheckSynonymExists(synonym.Crawler_Website.Id, synonym.Announcement_dictionary_mansion_properties.Id, synonym.Value);
+                    if (!exists)
+                        _databaseService.AddSynonymPropertiesWebsite(synonym);
+                }
             }
 
             _databaseService.SaveChanges();

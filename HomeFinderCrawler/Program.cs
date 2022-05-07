@@ -26,10 +26,11 @@ namespace HomeFinderCrawler
             WebCrawler cr = new(new DataContext("DataSource=craw.db"));
 
             // Adding to database search template
-            // cr.AddWebsite(AddOLXCrawler());
-            // cr.AddWebsite(AddGratkaWebsite());
-            // cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
-
+            cr.AddWebsite(AddOLXCrawler());
+            cr.AddWebsite(AddGratkaWebsite());
+            // TODO: Sprwadzanie przy dodawaniu czy nie ma już identycznej wartości, jeśli nie to nadpisz.
+            //cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
+            cr.AddSynonymsPropertiesToWebsite(AddOLXManssionSynonyms(cr));
             // TODO: Do zrobienia są synonimy w sposób dynamiczny.
             // AddGratkaSynonymsProperties()
 
@@ -42,23 +43,80 @@ namespace HomeFinderCrawler
             cr.Stop();
 
             // Sending requests to server
-            /*           RequestsService rs = new();
-                       rs.PostUrl = "https://webhook.site/4c97134c-cbf6-4ef0-a246-ded83f9ca632";
-                       rs.RegisterUrl = "http://localhost:8080/auth/register";
-                       rs.LoginUrl = "http://localhost:8080/auth/login";
-                       rs.AnnouncementsUrl = "http://localhost:8080/announcement";
-                       List<Announcement> announcements = cr.AnnouncementToSend();
-                       rs.AddErrorLogService(new ErrorLogService("log.txt"));
-                       rs.StartErrorLogService();
-                       rs.Register("patryk@elo.pl", "password");
-                       rs.Login("patryk@elo.pl", "password");
-                       rs.AddAnnouncements(announcements);*/
-            //rs.Send(announcements);
+            RequestsService rs = new();
+            rs.PostUrl = "https://webhook.site/498edf1b-bbae-499f-b64a-7971eecc1a0f";
+            rs.RegisterUrl = "http://localhost:8080/auth/register";
+            rs.LoginUrl = "http://localhost:8080/auth/login";
+            rs.AnnouncementsUrl = "https://webhook.site/498edf1b-bbae-499f-b64a-7971eecc1a0f";
+            List<Announcement> announcements = cr.AnnouncementToSend();
 
+            // Lista wszystkich danych z ogłoszeniami o mieszkaniach
+            List<Announcement_manssion> announcement_Manssions = cr.AnnouncementManssionsToSend();
+
+            Console.WriteLine("zebramop");
+            rs.AddErrorLogService(new ErrorLogService("log.txt"));
+            rs.StartErrorLogService();
+            //rs.Register("patryk@elo.pl", "password");
+            //rs.Login("patryk@elo.pl", "password");
+            Console.WriteLine("Dodawanie ogłozeń");
+            //rs.AddAnnouncements(announcements);
+            Console.WriteLine("wysyłaniue");
+            Console.WriteLine(announcement_Manssions.Count);
+            rs.Send(announcement_Manssions);
+            Console.WriteLine("wYSŁANE");
             // If sending was successfull, i must update database
             //cr.AnnoundementSend(announcements);
 
             //CleanCrawlerSimulation();
+        }
+
+        private static Announcement_manssion_synonyms[] AddOLXManssionSynonyms(WebCrawler webCrawler)
+        {
+            // Tworzenie listy synonimów
+            List<Announcement_manssion_synonyms> announcement_Manssion_Synonyms = new();
+            Crawler_website cw = webCrawler.GetCrawlerAnnouncementId("https://www.olx.pl/d/nieruchomosci/");
+
+            // Listy z wartościami do dodania
+            string[] Properties = new string[]
+            {
+                "RoomCount", "Level", "Furnished", "TypeOfBuild", "Area", 
+                "YearOfConstruction", "Location", "Volume", "AdditionalArea", "PricePerM2",
+                "LandArea", "Driveway", "State", "HeatingAndEnergy", "Media",
+                "FenceOfThePlot", "ShapeOfThePlot", "Apperance", "NumberOfPositions", "BuildingMaterial",
+                "Air_conditioning", "Balcony", "Basement", "Garage", "Garden",
+                "Lift", "NonSmokingOnly", "SeparateKitchen", "Terrace", "TwoStoreys",
+                "UtilityRoom", "AsphaltAccess", "Heating", "Parking", "Site",
+                "TypeOfRoof", "Bungalow", "Recreational", "InvestmentStatus", "Internet",
+                "CableTV", "Phone", "Preferences", "Market"
+            };
+
+            string[] values = new string[]
+            {
+                "Liczba pokoi:", "Poziom:", "Umeblowane:", "Rodzaj zabudowy:", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "", "", "", ""
+            };
+
+            for (int i = 0; i < Properties.Length; i++)
+            {
+                if (values[i] is not "" && Properties[i] is not "")
+                {
+                    announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+                    {
+                        Value = values[i].Replace(" ", "").ToLower(),
+                        Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId(Properties[i]),
+                        Crawler_Website = cw
+                    });
+                }
+
+            }
+            return announcement_Manssion_Synonyms.ToArray();
         }
 
         private static Announcement_manssion_synonyms[] AddGratkaManssionSynonyms(WebCrawler webCrawler)
@@ -73,7 +131,7 @@ namespace HomeFinderCrawler
                 "RoomCount", "Level", "Furnished", "TypeOfBuild", "Area",
                 "YearOfConstruction", "Location", "Volume", "AdditionalArea", "PricePerM2",
                 "LandArea", "Driveway", "State", "HeatingAndEnergy", "Media",
-                "FenceOfThePlot", "ShapeOfThePlot", "c", "NumberOfPositions", "BuildingMaterial",
+                "FenceOfThePlot", "ShapeOfThePlot", "Apperance", "NumberOfPositions", "BuildingMaterial",
                 "Air_conditioning", "Balcony", "Basement", "Garage", "Garden",
                 "Lift", "NonSmokingOnly", "SeparateKitchen", "Terrace", "TwoStoreys",
                 "UtilityRoom", "AsphaltAccess", "Heating", "Parking", "Site",
@@ -96,13 +154,17 @@ namespace HomeFinderCrawler
             
             for(int i = 0; i < Properties.Length; i++)
             {
-                announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+                if (values[i] is not "" && Properties[i] is not "")
                 {
-                    Id = i+1,
-                    Value = values[i].Replace(" ", "").ToLower(),
-                    Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId(Properties[i]),
-                    Crawler_Website = cw
-                });
+                    announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
+                    {
+                        Id = i + 1,
+                        Value = values[i].Replace(" ", "").ToLower(),
+                        Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId(Properties[i]),
+                        Crawler_Website = cw
+                    });
+                }
+
             }
             return announcement_Manssion_Synonyms.ToArray();
         }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DatabaseManager.Entities
 {
@@ -21,6 +20,7 @@ namespace DatabaseManager.Entities
         public Announcement_dictionary_item? Announcements_dictionary_item { get; set; }
 
         //TODO: na razie jest tylko = "manssion"
+        [JsonProperty("type")]
         public string? Announcement_type { get; set; }
 
         //sale, rent ...
@@ -29,11 +29,12 @@ namespace DatabaseManager.Entities
         // active, expired, deleted
         public Announcements_dictionary_status? Announcements_dictionary_status { get; set; }
 
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("priceIsNegotiable")]
         public bool? To_negotiate { get; set; }
 
         //TODO: Localization table
         //public int Localization_dictionary_id { get; set; }
+        [JsonIgnore]
         public ICollection<Image>? Images { get; set; }
         
         [JsonIgnore]

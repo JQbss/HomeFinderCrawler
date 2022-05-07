@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations.Schema;
 
 // TODO: Te wartości true/false trzeba przemyśleć, czy one mogą być null czy nie
 
@@ -7,8 +8,10 @@ namespace DatabaseManager.Entities
     // Encja do przechowywania danych typowo o ogłoszeniach związanych z nieruchomosciami
     public class Announcement_manssion
     {
+        [JsonIgnore]
         public int Id { get; set; }
         // Dopuszczona taka wartość jak kawalerka - dlatego string
+        [JsonProperty("numberOfRooms")]
         public string? Room_count { get; set; }
 
         //Dopuszczona wartość taka jak: parter/poddasze - dlatego string
@@ -18,6 +21,7 @@ namespace DatabaseManager.Entities
         public bool? Furnished { get; set; }
 
         //Typ zabudowy
+        [JsonProperty("typeOfBuilding")]
         public string? Type_of_building { get; set; }
 
         //Czynsz
@@ -27,10 +31,11 @@ namespace DatabaseManager.Entities
         public double? Area { get; set; }
 
         // Rok budowy
+        [JsonProperty("yearOfBuilding")]
         public int? Year_od_construction { get; set; }
 
-
         //Lokalizacja
+        [JsonIgnore]
         public string? Localization { get; set; }
         //TODO: Mam tu wpisane, żę powinno bć id sprzedawcy, ale to nie prawda, id sprzedawcy powinno być w innej encji
 
@@ -39,6 +44,7 @@ namespace DatabaseManager.Entities
         public string? Volume { get; set; }
 
         // Dodatkowa powierzchnia - balkon, taras, komórka itp.
+        [JsonProperty("additionalArea")]
         public string? Additional_area { get; set; }
 
         // Typ zabudowy chyba już jest
@@ -148,6 +154,7 @@ namespace DatabaseManager.Entities
 
         //Klucz obcy co tabeli ogłoszeń
         [ForeignKey("AnnouncementId")]
+        [JsonIgnore]
         public virtual Announcement Announcement { get; set; }
     }
 }

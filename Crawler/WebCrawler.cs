@@ -1,54 +1,46 @@
 ﻿using DatabaseManager;
 using DatabaseManager.Entities;
 using HtmlAgilityPack;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Crawler
 {
     public class WebCrawler
     {
-        //Stron nie będzie dużo, może lepiej wczytywać je do tabicy sobie tutaj
-
         readonly DatabaseService _databaseService;
 
         public bool IsWorking { get; set; } = false;
         private bool _isRunning = false;
 
-        public WebCrawler(DataContext dataContext)
-        {
-            _databaseService = new(dataContext);
-        }
+        public WebCrawler(DataContext dataContext) => _databaseService = new(dataContext);
 
+        /// <summary>
+        /// Function to start the webCrawler
+        /// </summary>
         public void Start()
         {
             IsWorking = true;
             _isRunning = true;
         }
 
-        public List<Announcement_manssion> AnnouncementManssionsToSend()
-        {
-            return _databaseService.GetAnnouncementManssionBySendAndProcessed(false, false);
-        }
+        /// <summary>
+        /// A function that retrieves the data to be sent
+        /// </summary>
+        /// <returns>Announcement_manssion entity list to be sent</returns>
+        public List<Announcement_manssion> AnnouncementManssionsToSend() => _databaseService.GetAnnouncementManssionBySendAndProcessed(false, false);
 
-        public List<Announcement> AnnouncementToSend()
-        {
-            return _databaseService.GetAnnouncementsBySentAndProcessed(false, false);
-        }
+        /// <summary>
+        /// A function that retrieves the data to be sent
+        /// </summary>
+        /// <returns>Announcement entity list to be sent</returns>
+        public List<Announcement> AnnouncementToSend() => _databaseService.GetAnnouncementsBySentAndProcessed(false, false);
 
-        public void AnnoundementSend(List<Announcement> announcements)
-        {
-            for(int i = 0; i < announcements.Count; i++)
-                announcements[i].Sent = true;
-            _databaseService.SaveChanges();
-        }
-
+        /// <summary>
+        /// Function starts data crawling
+        /// </summary>
         public void StartLinkAnnouncementCrawler()
         {
             HtmlWeb web = new();
-            //Czytanie linków z ogłoszeniami i dodawanie ich do bazy danych.
-            //Doawaj dopóki nie znajdzie ogłoszenia, które jest już w bazie danych
-
             List<Crawler_website> crawler_Websites = _databaseService.GetCrawlerWebsites();
             List<Announcement> announcements = new();
             foreach (Crawler_website crawler in crawler_Websites)
@@ -69,21 +61,15 @@ namespace Crawler
                         {
                             foreach (var link_contains in crawler.Crawler_Announcement.Crawler_Website_Link_Contains)
                             {
-                                if (link_contains.IsContains)
+                                if (link_contains.IsContains && !link.Contains(link_contains.Value))
                                 {
-                                    if (!link.Contains(link_contains.Value))
-                                    {
-                                        control = false;
-                                        break;
-                                    }
+                                    control = false;
+                                    break;
                                 }
-                                else
+                                else if (link.Contains(link_contains.Value))
                                 {
-                                    if (link.Contains(link_contains.Value))
-                                    {
-                                        control = false;
-                                        break;
-                                    }
+                                    control = false;
+                                    break;
                                 }
                             }
                         }
@@ -91,18 +77,10 @@ namespace Crawler
                         // Jeśli link pasuje do podango schematu to kontunuujmy badanie
                         if (!control) continue;
 
-
-                        //TODO: Sprwadzanie czy ogłoszenie jest już w bazie danych
                         Announcement? announcement1 = _databaseService.GetAnnouncementByLink(crawler.Prelink + link);
                         if (announcement1 is not null)
                         {
                             Console.WriteLine("ogłoszenie jest aktualne");
-                            /*foreach (Announcement announcement in announcements.Distinct())
-                            {
-                                _databaseService.AddAnnouncement(announcement);
-                            }
-                            _databaseService.SaveChanges();
-                            return;*/
                         }
                         else
                         {
@@ -122,10 +100,11 @@ namespace Crawler
             _databaseService.SaveChanges();
         }
         
-        //Crawlowanie nieprzetworzonych ogłoszeń
+        /// <summary>
+        /// The function starts crawling unprocessed ads
+        /// </summary>
         public void StartAnnouncementsCrawler()
         {
-            // Pobieranie nieprzetworzonych danych
             List<Announcement> announcements = _databaseService.GetAnnouncements().Where(x => x.Processed == false).ToList();
             
             foreach (Announcement announcement in announcements)
@@ -134,6 +113,11 @@ namespace Crawler
             _databaseService.SaveChanges();
         }
 
+        /// <summary>
+        /// The function download images url
+        /// </summary>
+        /// <param name="announcement"> Announcemenet</param>
+        /// <param name="doc"> HtmlDocument to reading</param>
         private static void DownloadImagesUrl(Announcement announcement, HtmlDocument doc)
         {
             List<Image> images = new();
@@ -147,6 +131,12 @@ namespace Crawler
             }
             announcement.Images = images;
         }
+
+        /// <summary>
+        /// Function that gets the title of an advertisement
+        /// </summary>
+        /// <param name="announcement">Announcement</param>
+        /// <param name="doc"> HtmlDocument to reading</param>
         private static void DownloadTitle(Announcement announcement, HtmlDocument doc)
         {
             if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Title_node_name).Any())
@@ -155,49 +145,58 @@ namespace Crawler
                     announcement.Title = item.InnerText.Trim();
             }
         }
+
+        /// <summary>
+        /// Function that download the price of an avertisement
+        /// </summary>
+        /// <param name="announcement">Announcement</param>
+        /// <param name="doc">HtmlDocument to reading</param>
         private static void DownloadPrice(Announcement announcement, HtmlDocument doc)
         {
             if (doc.DocumentNode.Descendants(announcement.Crawler_Website.Crawler_Announcement.Price_node_name).Any())
             {
                 foreach (HtmlNode item in doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Price_node_name}"))
                 {
-                    //To jest dobrze i tak ma być
                     string tmp = Regex.Match(item.InnerText.Replace(" ", ""), @"\d+").Value;
                     if (!string.IsNullOrEmpty(tmp))
                         announcement.Price = Convert.ToInt32(tmp);
                 }
             }
         }
+
+        /// <summary>
+        /// Function responsible for retrieving avertisement details
+        /// </summary>
+        /// <param name="announcement">Announcement</param>
+        /// <param name="doc">HtmlDocument to reading</param>
         private void DownloadManssionProperties(Announcement announcement, HtmlDocument doc)
         {
             if (announcement is null || doc is null) return;
-            // Sprawdzenie czy to ogłoszenie dotyczy nieruchomości
-            // TODO: Trzeba zrobić to porządnie na tabelach, a nie robić hardcode
             if (announcement.Announcement_type is not null && announcement.Announcement_type.Equals("manssion"))
             {
-                Console.WriteLine("OGŁOSZENIE JAKIEŚ NIERUCHOMOŚCI");
-
-                //Sprawdzanie czy jest jakiś rekord w Announcement_manssion dla tej posesji
                 var announcement_Manssion = _databaseService.GetAnnouncementManssionByAnnouncemenetId(announcement.Id);
 
-                if (announcement_Manssion is null)
-                {
-                    announcement_Manssion = new Announcement_manssion();
-                    announcement_Manssion.Announcement = _databaseService.GetAnnouncementById(announcement.Id);
-                    DownloadManssionLevel(announcement, doc, announcement_Manssion);
-                    //Pobieranie listy z parametrami
+                if (announcement_Manssion is not null) return;
 
-                    _databaseService.AddAnnouncementManssion(announcement_Manssion);
-                }
+                announcement_Manssion = new Announcement_manssion
+                {
+                    Announcement = _databaseService.GetAnnouncementById(announcement.Id)
+                };
+                DownloadManssionProperties(announcement, doc, announcement_Manssion);
+                _databaseService.AddAnnouncementManssion(announcement_Manssion);
             }
         }
 
-        // Pobieranie danych o ogłoszeniu
-        private void DownloadManssionLevel(Announcement announcement, HtmlDocument doc, Announcement_manssion announcement_Manssion)
+        /// <summary>
+        /// Function responsible for retrieving avertisement details
+        /// </summary>
+        /// <param name="announcement">Announcement</param>
+        /// <param name="doc">HtmlDocument to reading</param>
+        /// <param name="announcement_Manssion"> Announcement manssion</param>
+        private void DownloadManssionProperties(Announcement announcement, HtmlDocument doc, Announcement_manssion announcement_Manssion)
         {
             int websiteID = _databaseService.GetAnnonucementCrawlerWebsiteId(announcement_Manssion.Announcement.Id);
-            // TODO: Trzeba zrobić do tego reguły.
-                HtmlNode[] nodes; 
+            HtmlNode[] nodes; 
             if (announcement.Crawler_Website.Id == 1)
                     nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
             else
@@ -205,56 +204,42 @@ namespace Crawler
 
             foreach (var node in nodes)
             {
-                //Teraz trzeba zrobić pętle po li
                 foreach (var nod in node.SelectNodes("//li"))
                 {
-                    // Lokalizacja ogłoszenia
                     string[] locations_synonims = _databaseService.GetAnnouncementsManssionSynonyms("Location", websiteID);
                     if (announcement_Manssion.Localization is null)
                         announcement_Manssion.Localization = SearchFirstSynonymValue(nod, locations_synonims);
 
-                    // Liczba pięter w budynku
                     string[] level_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Level", websiteID);
                     if(announcement_Manssion.Level is null)
                         announcement_Manssion.Level = SearchFirstSynonymValue(nod, level_synonyms);
 
-                    // Powierzchnnia w metrach kwadratowych
                     string[] area_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Area", websiteID);
-                    //TODO: Zły format danych w bazie - ogarnia tylko liczby
                     if (announcement_Manssion.Area is null)
-                    {
-                        announcement_Manssion.Area = SearchFirstSynonymValue(nod, area_synonyms) is null ? null: double.Parse(SearchFirstSynonymValue(nod, area_synonyms).Replace("m2",""));
-                    }
+                        announcement_Manssion.Area = SearchFirstSynonymValue(nod, area_synonyms) is null ? null: double.Parse(Regex.Replace(SearchFirstSynonymValue(nod, area_synonyms), "[^0-9.]", ""));
 
-                    // Typ budynku
                     string[] type_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("TypeOfBuild", websiteID);
                     if (announcement_Manssion.Type_of_building is null)
                         announcement_Manssion.Type_of_building = SearchFirstSynonymValue(nod, type_synonyms);
 
-                    // Rok budowy
                     string[] year_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("YearOfConstruction", websiteID);
                     if (announcement_Manssion.Year_od_construction is null)
                         announcement_Manssion.Year_od_construction = SearchFirstSynonymValue(nod, year_synonyms) is null ? null: int.Parse(SearchFirstSynonymValue(nod, year_synonyms));
 
-                    // Liczba pokoi
                     string[] room_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("RoomCount", websiteID);
                     if (announcement_Manssion.Room_count is null)
                         announcement_Manssion.Room_count = SearchFirstSynonymValue(nod, room_synonyms);
 
-                    // Typ zabudowy
                     string[] type_of_building = _databaseService.GetAnnouncementsManssionSynonyms("TypeOfBuild", websiteID);
                     if (announcement_Manssion.Type_of_building is null)
                         announcement_Manssion.Type_of_building = SearchFirstSynonymValue(nod, type_of_building);
 
-                    // Cena wynajmu
                     string[] Rent_price_synonyms = new string[1];
 
-                    // Głośność mieszkania
                     string[] volume_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Volume", websiteID);
                     if(announcement_Manssion.Volume is null)
                         announcement_Manssion.Volume = SearchFirstSynonymValue(nod, volume_synonyms);
 
-                    // Powierzchnia dodatkowa z gratki = Tutaj może być ich przecież wiele
                     string[] additional_area_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("AdditionalArea", websiteID);
                     if (announcement_Manssion.Additional_area is null)
                         announcement_Manssion.Additional_area = SearchFirstSynonymValue(nod, additional_area_synonyms);
@@ -263,32 +248,26 @@ namespace Crawler
                     if (announcement_Manssion.Price_per_m2 is null)
                         announcement_Manssion.Additional_area = SearchFirstSynonymValue(nod, price_per_m2_synonyms);
 
-                    // Powierzchnia działki w metrach kwaratowych
                     string[] land_area_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("LandArea", websiteID);
                     if (announcement_Manssion.Land_area is null)
                         announcement_Manssion.Land_area = SearchFirstSynonymValue(nod, land_area_synonyms);
 
-                    // Droga dojazdowa z gratki
                     string[] driveway_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Driveway", websiteID);
                     if (announcement_Manssion.Driveway is null)
                         announcement_Manssion.Driveway = SearchFirstSynonymValue(nod, driveway_synonyms);
 
-                    // Stan nieruchomości z gratki
                     string[] state_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("State", websiteID);
                     if (announcement_Manssion.State is null)
                         announcement_Manssion.State = SearchFirstSynonymValue(nod, state_synonyms);
 
-                    // Ogrzewanie i energia z gratki
                     string[] heating_and_energy_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("HeatingAndEnergy", websiteID);
                     if (announcement_Manssion.Heating_and_energy is null)
                         announcement_Manssion.Heating_and_energy = SearchFirstSynonymValue(nod, heating_and_energy_synonyms);
 
-                    // Media z gratki
                     string[] media_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Media", websiteID);
                     if (announcement_Manssion.Media is null)
                         announcement_Manssion.Media = SearchFirstSynonymValue(nod, media_synonyms);
 
-                    // Ogrodzenie działki z gratki
                     string[] fence_of_the_plot_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("FenceOfThePlot", websiteID);
                     if (announcement_Manssion.Fence_of_the_plot is null)
                         announcement_Manssion.Fence_of_the_plot = SearchFirstSynonymValue(nod, fence_of_the_plot_synonyms);
@@ -301,12 +280,10 @@ namespace Crawler
                     if (announcement_Manssion.Apperance is null)
                         announcement_Manssion.Apperance = SearchFirstSynonymValue(nod, apperance_synonyms);
 
-                    // Liczba stanowisk w garażu
                     string[] number_of_position_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("NumberOfPositions", websiteID);
                     if (announcement_Manssion.Number_of_positions is null)
                         announcement_Manssion.Number_of_positions = SearchFirstSynonymValue(nod, number_of_position_synonyms);
 
-                    // Materiał budynku z Gratki
                     string[] building_material_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("BuildingMaterial", websiteID);
                     if(announcement_Manssion.Building_material is null)
                         announcement_Manssion.Building_material = SearchFirstSynonymValue(nod, building_material_synonyms);
@@ -359,12 +336,9 @@ namespace Crawler
                     if (!announcement_Manssion.Heating)
                         announcement_Manssion.Heating = SearchFirstSynonymValue(nod, heating_synonyms) is null ? false : true;
 
-                    // TODO: Miejsce parkingowe z gratki
-                    // TODO: Do przetestowania - nie wiem czy boolean to jest tutaj dobry pomysł, albo niech będzie boolean który możę mieć null
                     string[] parking_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Parking", websiteID);
                     if (!announcement_Manssion.Parking)
                         announcement_Manssion.Parking = SearchFirstSynonymValue(nod, parking_synonyms) is null ? false : true;
-
 
                     string[] site_synonyms = _databaseService.GetAnnouncementsManssionSynonyms("Site", websiteID);
                     if (!announcement_Manssion.Site)
@@ -395,49 +369,39 @@ namespace Crawler
                     string[] preferences_synonyms = new string[1];
 
                     string[] market_synonyms = new string[1];
-
-                    // TODO: Jest jeszcze na gratce właściwość OKNA
-                    // TODO: Jest jeszcze właściwość: Czy mieszkanie ma łazienkę.
-                    // TODO: Jest jeszcze liczba miejsc parkingowych
-                    // TODO: User może zacznaczyć wiele obiektów w pobliżu.
-                    // TODO: Czy jest prąd, czy jest gazm czy jest woda
-                    // TODO: Kanalizacja
-                    // TODO: Garaże mogą mieć jeszcze pole: konstrukcja
-
                 }
             }
         }
-        
-        // TODO: Zrobić to porządnie, żeby nie ucinała tekstu i spacji i tym podobne
-        private string SearchFirstSynonymValue(HtmlNode node, string[] synonyms)
-        {
-            if (synonyms is not null)
-            {
-                foreach (string synonym in synonyms.Where(x => x is not null && synonyms.Length != 0))
-                {
-                    string text = node.InnerText.Replace(" ", "").ToLower();
-                    if (text.Contains(synonym))
-                    {
-                        text = text.Replace(synonym, "").Trim();
-                        Console.WriteLine(text);
-                        return text;
-                    }
-                }
 
-                // TODO: Tutaj można ogarnąć, żeby przerobić to na string.empty
-                return null;
+        /// <summary>
+        /// The function looks for synonyms in htmlnode, removes them and returns the processed data
+        /// </summary>
+        /// <param name="node">HtmlNoe</param>
+        /// <param name="synonyms">Synonym array</param>
+        /// <returns>Value from website</returns>
+        private string? SearchFirstSynonymValue(HtmlNode node, string[] synonyms)
+        {
+            if (synonyms is null) return null;
+
+            foreach (string synonym in synonyms.Where(x => x is not null && synonyms.Length != 0))
+            {
+                string text = node.InnerText.Replace(" ", "").ToLower();
+                if (text.Contains(synonym))
+                {
+                    text = text.Replace(synonym, "").Trim();
+                    Console.WriteLine(text);
+                    return text;
+                }
             }
             return null;
         }
 
-
+        /// <summary>
+        /// Start crawling full advertisment
+        /// </summary>
+        /// <param name="url">Page Url</param>
         private void StartAnnouncementCrawler(string url)
         {
-            //TODO: Może lepiej sprawdzać po jakimś id bądź nazwie klasy to będzie wiele czytelniej.
-            //TODO: Rozdzielić te funkcję na mniejsze funkcje.
-            //Jeśli nie jest aktualne to trzeba usunąć
-
-            // Przetwarzanie informacji o ogłoszeniu
             HtmlWeb web = new();
             Console.WriteLine(url);
             HtmlDocument doc = web.Load(url);
@@ -447,33 +411,25 @@ namespace Crawler
             if (announcement is null)
                 return;
 
-            Console.WriteLine(announcement.Link);
-            //Pobieranie zdjęć ogłoszenia
             DownloadImagesUrl(announcement, doc);
             DownloadTitle(announcement, doc);
             DownloadPrice(announcement, doc);
             DownloadManssionProperties(announcement, doc);
 
-            //Pobieranie opisu ogłoszenia
-            //TODO: Zabezpieczyć, że nie zawsze może być podana klasa i takie tam.
             nodes = doc.DocumentNode.SelectNodes($"//{announcement.Crawler_Website.Crawler_Announcement.Description_node_name}")
                 .Where(x => x.HasClass(announcement.Crawler_Website.Crawler_Announcement.Description_class_name)).ToArray();
 
-            //Dlaczego tutaj są takie dziwne pętle
-            //Tego nie powinno tutaj być
             foreach( HtmlNode item in nodes)
-            {
-                Console.WriteLine(item.InnerText);
                 announcement.Description = item.InnerText.Trim();
-            }
 
-            // Updating announcement
-            
-            // TODO: Tymczasowo, żeby przetwarzać kilkra razy ogłoszenia
-            // announcement.Processed = true;
             _databaseService.SaveChanges();
         }
 
+        /// <summary>
+        /// Checking if the webpage is in the database
+        /// </summary>
+        /// <param name="url">Url webpage</param>
+        /// <returns>true or false</returns>
         private bool WebsiteExists(string url)
         {
             foreach(var cw in _databaseService.GetCrawlerWebsites())
@@ -485,12 +441,11 @@ namespace Crawler
         }
 
         /// <summary>
-        /// Dodawanie synonimów do strony internetowej
+        /// A function that adds synonyms to the properties of a website
         /// </summary>
-        /// <param name="announcement_Manssion_Synonyms">Tablica synonimów</param>
+        /// <param name="announcement_Manssion_Synonyms">Announcement Manssion Synonyms array</param>
         public void AddSynonymsPropertiesToWebsite(Announcement_manssion_synonyms[] announcement_Manssion_Synonyms)
         {
-            // Sprawdzanie czy tablica nie jesst pusta
             if(announcement_Manssion_Synonyms is null || announcement_Manssion_Synonyms.Length is 0)
                 return;
 
@@ -498,31 +453,33 @@ namespace Crawler
             {
                 if (synonym is not null)
                 {
-                    // Sprawdzanie czy synonim jest już w bazie danych
                     bool exists = _databaseService.CheckSynonymExists(synonym.Crawler_Website.Id, synonym.Announcement_dictionary_mansion_properties.Id, synonym.Value);
                     if (!exists)
                         _databaseService.AddSynonymPropertiesWebsite(synonym);
                 }
             }
-
             _databaseService.SaveChanges();
         }
 
         /// <summary>
-        /// 
+        /// A function that gets the id of the ad synonym
         /// </summary>
-        /// <param name="property_name"></param>
-        /// <returns></returns>
-        public Announcement_dictionary_mansion_properties? GetAnnouncementMansionSynonymPropertiesId(string property_name)
-        {
-            return _databaseService.GetAnnonuncementDictionaryMansionPropertiesId(property_name);
-        }
+        /// <param name="property_name">Synonym name</param>
+        /// <returns>Announcement_dictionary_mansion_properties</returns>
+        public Announcement_dictionary_mansion_properties? GetAnnouncementMansionSynonymPropertiesId(string property_name) 
+            => _databaseService.GetAnnonuncementDictionaryMansionPropertiesId(property_name);
 
-        public Crawler_website? GetCrawlerAnnouncementId(string webName)
-        {
-            return _databaseService.GetCrawlerAnnouncementId(webName);
-        }
+        /// <summary>
+        /// A function that gets the id of a website
+        /// </summary>
+        /// <param name="webName">Url Webpage</param>
+        /// <returns>Crawler_website or null</returns>
+        public Crawler_website? GetCrawlerAnnouncementId(string webName) => _databaseService.GetCrawlerAnnouncementId(webName);
 
+        /// <summary>
+        /// A feature that adds a new website to the crawler
+        /// </summary>
+        /// <param name="website">Crawler website</param>
         public void AddWebsite(Crawler_website website)
         {
             if (website is null || WebsiteExists(website.Website)) return;
@@ -531,45 +488,24 @@ namespace Crawler
             _databaseService.SaveChanges();
         }
 
-        public void AddWebsite(string url, string regex, string prelink, int maxPage, Crawler_announcement crawler_Announcement)
-        {
-            if (url is null || WebsiteExists(url)) return;
-
-            Crawler_website ncw = new()
-            {
-                Regex = regex,
-                Website = url,
-                Prelink = prelink,
-                MaxPages = maxPage,
-                Crawler_Announcement = crawler_Announcement
-            };
-
-            _databaseService.AddCrawlerWebsite(ncw);
-            _databaseService.SaveChanges();
-        }
-
-        //TODO:
-        public void RemoveWebsite(string url)
-        {
-            _databaseService.RemoveCrawlerWebsite(url);
-        }
-
-        //TEST METHOD - TO DELETE
+        /// <summary>
+        /// Function show all webpages in cralwer database
+        /// </summary>
         public void ShowWebpages()
         {
             List<Crawler_website> crawler_Websites = _databaseService.GetCrawlerWebsites();
 
             for(int i = 0; i < crawler_Websites.Count; i++)
-            {
                 Console.WriteLine(crawler_Websites[i].Id + " " + crawler_Websites[i].Website + " " + crawler_Websites[i].Regex);
-            }
         }
 
+        /// <summary>
+        /// Function stopping cralwer
+        /// </summary>
         public void Stop()
         {
             IsWorking = false;
             _isRunning = false;
-            Console.WriteLine("STOP");
         }
     }
 }

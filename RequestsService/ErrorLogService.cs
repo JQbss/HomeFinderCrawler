@@ -14,7 +14,6 @@ namespace RequestsServices
 
         public void AddLog(string logMessage)
         {
-            //TOOD: Adding log in interval time
             if (_loggingEnabled && _logFilePath != string.Empty)
             {
                 _buffer.Append(DateTime.Now + ": " + logMessage + Environment.NewLine);

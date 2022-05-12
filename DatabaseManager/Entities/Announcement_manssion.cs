@@ -1,158 +1,142 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
 
-// TODO: Te wartości true/false trzeba przemyśleć, czy one mogą być null czy nie
-
 namespace DatabaseManager.Entities
 {
-    // Encja do przechowywania danych typowo o ogłoszeniach związanych z nieruchomosciami
     public class Announcement_manssion
     {
         [JsonIgnore]
         public int Id { get; set; }
-        // Dopuszczona taka wartość jak kawalerka - dlatego string
+
         [JsonProperty("numberOfRooms")]
+        [JsonIgnore]
         public string? Room_count { get; set; }
 
-        //Dopuszczona wartość taka jak: parter/poddasze - dlatego string
+        [JsonIgnore]
         public string? Level { get; set; }
 
-        //Czy umeblowane
         public bool? Furnished { get; set; }
 
-        //Typ zabudowy
         [JsonProperty("typeOfBuilding")]
+        [JsonIgnore]
         public string? Type_of_building { get; set; }
 
-        //Czynsz
         public int? Rent_price { get; set; }
 
-        //Powierzchnia 
         public double? Area { get; set; }
 
-        // Rok budowy
         [JsonProperty("yearOfBuilding")]
         public int? Year_od_construction { get; set; }
 
-        //Lokalizacja
         [JsonIgnore]
         public string? Localization { get; set; }
-        //TODO: Mam tu wpisane, żę powinno bć id sprzedawcy, ale to nie prawda, id sprzedawcy powinno być w innej encji
 
-
-        // Głośność mieszkania
+        [JsonIgnore]
         public string? Volume { get; set; }
 
-        // Dodatkowa powierzchnia - balkon, taras, komórka itp.
         [JsonProperty("additionalArea")]
         public string? Additional_area { get; set; }
 
-        // Typ zabudowy chyba już jest
-
-        // Cena za metr kwadratowy
+        [JsonIgnore]
         public string? Price_per_m2 { get; set; }
 
-        // Powierzchnia działki
-        // TODO: Możliwe, że nie musi być to string
+        [JsonIgnore]
         public string? Land_area { get; set; }
 
-        // Droga dojazdowa
+        [JsonIgnore]
         public string? Driveway { get; set; }
 
-        // Stan mieszkania ( czy wyremontowane, do remontu itp. )
+        [JsonIgnore]
         public string? State { get; set; }
 
-        // Ogrzewanie i energia
+        [JsonIgnore]
         public string? Heating_and_energy { get; set; }
 
-        // Czy trzeba płacić za media itp.
+        [JsonIgnore]
         public string? Media { get; set; }
 
-        // Ogrodzenie działki
+        [JsonIgnore]
         public string? Fence_of_the_plot { get; set; }
 
-        //Kształt działki
+        [JsonIgnore]
         public string? Shape_of_the_plot { get; set; }
 
-        // Wygląd (?)
+        [JsonIgnore]
         public string? Apperance { get; set; }
 
-        // Liczba stanowisk (np. w garażu )
+        [JsonIgnore]
         public string? Number_of_positions { get; set; }
 
-        // Materiał budynku
+        [JsonIgnore]
         public string? Building_material { get; set; }
 
-        // Klimatyzacja
+        [JsonIgnore]
         public bool Air_conditioning { get; set; }
 
-        // Balkon
+        [JsonIgnore]
         public bool Balcony { get; set; }
 
-        // Piwnica
+        [JsonIgnore]
         public bool Basement { get; set; }
-        // Garaż
+
+        [JsonIgnore]
         public bool Garage { get; set; }
-        // Ogród
+
+        [JsonIgnore]
         public bool Garden { get; set; }
-        // Winda
+
+        [JsonIgnore]
         public bool Lift { get; set; }
-        // Tylko dla niepalących
+
+        [JsonIgnore]
         public bool Non_smoking_only { get; set; }
-        // Oddzielna kuchnia
+
+        [JsonIgnore]
         public bool Separate_kitchen { get; set; }
-        // Taras
+
+        [JsonIgnore]
         public bool Terrace { get; set; }
-        // Dwie kondygnacje
+
+        [JsonIgnore]
         public bool Two_storeys { get; set; }
-        // Pomieszczenie użytkowe
+
+        [JsonIgnore]
         public bool Utility_room { get; set; }
-        // Dojazd asfaltowy
+
+        [JsonIgnore]
         public bool Asphalt_access { get; set; }
-        // Ogrzewanie
+
+        [JsonIgnore]
         public bool Heating { get; set; }
-        // Parking
+
+        [JsonIgnore]
         public bool Parking { get; set; }
-        // Witryna
+
+        [JsonIgnore]
         public bool Site { get; set; }
 
-        // Rodzaj dachu
+        [JsonIgnore]
         public string? Type_of_roof { get; set; }
-        // Dom parterowy
+
+        [JsonIgnore]
         public bool Bungalow { get; set; }
-        // Rekreacyjny
+
+        [JsonIgnore]
         public bool Recreational { get; set; }
-        // Stan inwestycji
+
         public string? Investment_status { get; set; }
-        // Internet
+
+        [JsonIgnore]
         public bool Internet { get; set; }
-        // Telewizja kablowa
+
+        [JsonIgnore]
         public bool Cable_TV { get; set; }
-        // Telefon
+
+        [JsonIgnore]
         public bool Phone { get; set; }
 
-        // TODO: Może to trzeba zrobić jakoś inaczej, bo to w obecnej formie 
-        // Przeznaczenie lokalu
-        // Gastronomia
-
-        // Przemysłowy
-        // Hotelowy
-        // Biurowy
-        // Handlowy
-        // Usługowy
-        // Magazynowe
-        // Produkcyjne
-
-        // Preferencje ( kobiety/mężczyźni )
-        public string? Preferences { get; set; }
-
-        
-
-
-        //Czy rynek wtórny czy nowy - dotyczyć powinno ofert sprzedaży mieszkań
         public string? Market { get; set; }
 
-        //Klucz obcy co tabeli ogłoszeń
         [ForeignKey("AnnouncementId")]
         [JsonIgnore]
         public virtual Announcement Announcement { get; set; }

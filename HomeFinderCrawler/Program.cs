@@ -37,17 +37,17 @@ namespace HomeFinderCrawler
             //cr.AddWebsite("https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/cala-polska", "a", "http://www.otodom.pl", 2, new Crawler_announcement() { Image_node_name = "img" });
 
             cr.ShowWebpages();
-            cr.StartLinkAnnouncementCrawler();
-            cr.StartAnnouncementsCrawler();
-            cr.Start();
-            cr.Stop();
+           // cr.StartLinkAnnouncementCrawler();
+           // cr.StartAnnouncementsCrawler();
+            //cr.Start();
+           // cr.Stop();
 
             // Sending requests to server
             RequestsService rs = new();
-            rs.PostUrl = "https://webhook.site/498edf1b-bbae-499f-b64a-7971eecc1a0f";
+            rs.PostUrl = "http://localhost:8080/announcement/many";
             rs.RegisterUrl = "http://localhost:8080/auth/register";
             rs.LoginUrl = "http://localhost:8080/auth/login";
-            rs.AnnouncementsUrl = "https://webhook.site/498edf1b-bbae-499f-b64a-7971eecc1a0f";
+            rs.AnnouncementsUrl = "http://localhost:8080/announcement/many";
             List<Announcement> announcements = cr.AnnouncementToSend();
 
             // Lista wszystkich danych z ogłoszeniami o mieszkaniach
@@ -56,8 +56,8 @@ namespace HomeFinderCrawler
             Console.WriteLine("zebramop");
             rs.AddErrorLogService(new ErrorLogService("log.txt"));
             rs.StartErrorLogService();
-            //rs.Register("patryk@elo.pl", "password");
-            //rs.Login("patryk@elo.pl", "password");
+            //rs.Register("patryk@eo3o.pl", "password");
+            rs.Login("www@ww3w3.pl", "password");
             Console.WriteLine("Dodawanie ogłozeń");
             //rs.AddAnnouncements(announcements);
             Console.WriteLine("wysyłaniue");
@@ -92,15 +92,15 @@ namespace HomeFinderCrawler
 
             string[] values = new string[]
             {
-                "Liczba pokoi:", "Poziom:", "Umeblowane:", "Rodzaj zabudowy:", "",
+                "Liczba pokoi:", "Poziom:", "Umeblowane:", "Rodzaj zabudowy:", "Powierzchnia:",
+                "", "", "", "", "Cena za m²:",
+                "Powierzchnia działki:", "", "Stan:", "", "",
                 "", "", "", "", "",
                 "", "", "", "", "",
                 "", "", "", "", "",
                 "", "", "", "", "",
                 "", "", "", "", "",
-                "", "", "", "", "",
-                "", "", "", "", "",
-                "", "", "", ""
+                "", "", "", "Rynek:"
             };
 
             for (int i = 0; i < Properties.Length; i++)

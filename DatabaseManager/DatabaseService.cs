@@ -26,16 +26,6 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
-        //
-        // SELECT by id
-        //
-        public Image? GetImageById(int id)
-        {
-            return _dbContext.Images
-                .Where(x => x.Id == id)
-                .FirstOrDefault();
-        }
-
         public Announcement? GetAnnouncementById(int id)
         {
             return _dbContext.Announcements
@@ -43,25 +33,6 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
-        public Announcements_dictionary_status? GetAnnouncementsDictionaryStatus(int id)
-        {
-            return _dbContext.AnnouncementsDictionaryStatuses
-                .Where(x => x.Id == id)
-                .FirstOrDefault();
-        }
-
-        public Crawler_website? GetCrawlerWebsiteById(int id)
-        {
-            return _dbContext.CrawlerWebsites
-                .Where(x => x.Id == id)
-                .FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Funkcja zwracąca synonimy
-        /// </summary>
-        /// <param name="Synonym_name">Wartość właściwości</param>
-        /// <returns>Zwraca tablicę z synonimamy dla danych właściwości nieruchomości</returns>
         public string[] GetAnnouncementsManssionSynonyms(string Synonym_name, int WebSite_ID)
         {
             return _dbContext.AnnouncementManssionSynonyms
@@ -89,11 +60,6 @@ namespace DatabaseManager
                 .Include(x => x.Images)
                 .Where(x => x.Link == link)
                 .FirstOrDefault();
-        }
-
-        public List<Announcement_manssion> GetAnnouncementManssion()
-        {
-            return _dbContext.AnnouncementManssions.ToList();
         }
 
         public List<Announcement_manssion> GetAnnouncementManssionBySendAndProcessed(bool sent, bool processed = true)
@@ -131,16 +97,6 @@ namespace DatabaseManager
                 .ToList();
         }
 
-
-        //SELECT BY URL
-        public Crawler_website? GetCrawlerWebsiteByUrl(string url)
-        {
-            return _dbContext.CrawlerWebsites
-                .Include(x => x.Crawler_Announcement)
-                .Where(x => x.Website == url)
-                .FirstOrDefault();
-        }
-
         // Funkcja sprawdzająca czy istnieje już podany synonim.
         public bool CheckSynonymExists(int CrawlerWebsiteID, int AnnouncementDictionaryMansionPropertiesId, string SynonymValue)
         {
@@ -163,17 +119,6 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
-        //
-        // INSERT
-        //
-        public bool AddImage(Image image)
-        {
-            if (image is null) return false;
-
-            _dbContext.Images.Add(image);
-            return true;
-        }
-
         public bool AddAnnouncementManssion(Announcement_manssion announcement_Manssion)
         {
             if (announcement_Manssion is null) return false;
@@ -187,14 +132,6 @@ namespace DatabaseManager
             if(announcement is null) return false;
 
             _dbContext.Announcements.Add(announcement);
-            return true;
-        }
-
-        public bool AddAnnouncementDictionaryStatus(Announcements_dictionary_status announcementsDictionaryStatus)
-        {
-            if (announcementsDictionaryStatus is null) return false;
-
-            _dbContext.AnnouncementsDictionaryStatuses.Add(announcementsDictionaryStatus);
             return true;
         }
 
@@ -214,21 +151,6 @@ namespace DatabaseManager
             return true;
         }
 
-        //DELETE
-
-        //TODO
-        public bool RemoveCrawlerWebsite(string url)
-        {
-            if (string.IsNullOrEmpty(url)) return false;
-
-            //_dbContext.CrawlerWebsites.Dele;
-            return true;
-        }
-
-
-        public void SaveChanges()
-        {
-            _dbContext.SaveChanges();
-        }
+        public void SaveChanges() => _dbContext.SaveChanges();
     }
 }

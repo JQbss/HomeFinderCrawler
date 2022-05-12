@@ -8,7 +8,6 @@ namespace RequestsServices
 {
     public class RequestsService
     {
-        // Service using in logging errror
         IErrorLogService? _logService = null;
         private bool _isLogged = false;
         private string _token = string.Empty;
@@ -16,7 +15,6 @@ namespace RequestsServices
         private HttpClient _httpClient = new();
 
         public string PostUrl { get; set; } = string.Empty;
-        public string UsersURL { get; set; } = string.Empty;
         public string AnnouncementsUrl { get; set; } = string.Empty;
         public string LoginUrl { get; set; } = string.Empty;
         public string RegisterUrl { get; set; } = string.Empty;
@@ -33,12 +31,11 @@ namespace RequestsServices
                 return;
             }
 
-            JObject json = new();
-            json.Add("email", username);
-            json.Add("password", password);
-
-            Console.WriteLine("Register.json");
-            Console.WriteLine(json.ToString());
+            JObject json = new()
+            {
+                { "email", username },
+                { "password", password }
+            };
 
             StringContent sc = new(json.ToString(), Encoding.UTF8, "application/json");
 
@@ -67,13 +64,11 @@ namespace RequestsServices
                 return;
             }
 
-
-            JObject json = new();
-            json.Add("email", username);
-            json.Add("password", password);
-
-            //Console.WriteLine("Login.json");
-            //Console.WriteLine(json.ToString());
+            JObject json = new()
+            {
+                { "email", username },
+                { "password", password }
+            };
 
             StringContent sc = new(json.ToString(), Encoding.UTF8, "application/json");
             try
@@ -113,7 +108,6 @@ namespace RequestsServices
             //Usuwanie tokena
             _token = string.Empty;
         }
-
 
         // Przeciążenie funkcji
         public bool Send(List<Announcement_manssion> announcement_Manssions)
@@ -165,19 +159,18 @@ namespace RequestsServices
                     // Tworzenie listy obrazów
                     // To jest mało wydajne, bo robię listę przez Add
                     List<string> imagesList = new();
-                    if (imagesList is not null && imagesList.Count != 0)
+                    if (imagesList is not null)
                     {
                         foreach (var img in addMann.Announcement.Images)
                             imagesList.Add(img.Url);
 
                         result.Merge(JObject.Parse(("{imageLinks: " + JsonConvert.SerializeObject(imagesList, options).ToString() + "}")));
                     }
-
                     oblist.Add(result);
                 }
-
             }
             SendJson(JsonConvert.SerializeObject(oblist, options).ToString());
+            Console.WriteLine(JsonConvert.SerializeObject(oblist, options).ToString());
             return true;
         }
 
@@ -191,15 +184,9 @@ namespace RequestsServices
                 response.Content.ReadAsStringAsync();
 
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    Console.WriteLine("WORK");
                     return true;
-                }
-                else
-                {
-                    Console.WriteLine("NOT WORK");
-                    _logService?.AddLog(_applicationModuleName + "PostStatusCode:" + response.StatusCode);
-                }
+
+                _logService?.AddLog(_applicationModuleName + "PostStatusCode:" + response.StatusCode);
                 return false;
             }
             catch (Exception e)
@@ -232,11 +219,7 @@ namespace RequestsServices
                 response.Content.ReadAsStringAsync();
 
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    Console.WriteLine("WORK!");
                     return true;
-                }
-                else Console.WriteLine(response.StatusCode);
                 return false;
             }
             catch (Exception e)
@@ -254,7 +237,6 @@ namespace RequestsServices
                 return false;
             }
 
-            Console.WriteLine("Pętla");
             foreach(Announcement announcement in announcements)
                 AddAnnouncement(announcement);
 
@@ -263,14 +245,12 @@ namespace RequestsServices
 
         public bool AddAnnouncement(Announcement announcement)
         {
-            // TODO: Better parsing json.
-            JObject json = new();
-            json.Add("description", announcement.Description);
-            json.Add("title", announcement.Title);
-            json.Add("link", announcement.Link);
-
-            Console.WriteLine("Zaczynamy");
-            Console.WriteLine(json.ToString());
+            JObject json = new()
+            {
+                { "description", announcement.Description },
+                { "title", announcement.Title },
+                { "link", announcement.Link }
+            };
             StringContent sc = new(json.ToString(), Encoding.UTF8, "application/json");
 
             try
@@ -285,12 +265,8 @@ namespace RequestsServices
                     announcement.Sent = true;
                     return true;
                 }
-                else
-                {
-                    Console.WriteLine("error");
-                    _logService?.AddLog(_applicationModuleName + "Failed send announcement id:" + announcement.Id + " Content:" + content.Result.ToString());
-                    return false;
-                }
+                _logService?.AddLog(_applicationModuleName + "Failed send announcement id:" + announcement.Id + " Content:" + content.Result.ToString());
+                return false;
             }
             catch(Exception e)
             {
@@ -299,9 +275,6 @@ namespace RequestsServices
             }
         }
 
-        ~RequestsService()
-        {
-            _httpClient?.Dispose();
-        }
+        ~RequestsService() => _httpClient?.Dispose();
     }
 }

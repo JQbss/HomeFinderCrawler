@@ -14,24 +14,8 @@ namespace DatabaseManager
                     new Announcement_dictionary_item() { Id = 3, Name = "Garaż" },
                     new Announcement_dictionary_item() { Id = 4, Name = "Działka" }
                 );
-
-            modelBuilder.Entity<Announcements_dictionary_status>().HasData
-                (
-                    new Announcements_dictionary_status() { Id = 1, Name = "Aktywne" },
-                    new Announcements_dictionary_status() { Id = 2, Name = "Usunięte" },
-                    new Announcements_dictionary_status() { Id = 3, Name = "Wygaśnięte" }
-                );
-
-            modelBuilder.Entity<Announcement_dictionary_category>().HasData
-                (
-                    new Announcement_dictionary_category() { Id = 1, Name = "Sprzedaż" },
-                    new Announcement_dictionary_category() { Id = 2, Name = "Wynajem" }
-                );
             modelBuilder.Entity<Announcement_dictionary_mansion_properties>().HasData
                 (
-                    // Uzupełnienie słownika właściwości jakie mogą być pobierane ze stron
-                    // Na podstawie których można później wyciągać synonimy
-                    // Słownik jest po to, żeby wszystkie strony miały jednakową wartość właściwości
                     new Announcement_dictionary_mansion_properties() 
                     { 
                         Id = 1,

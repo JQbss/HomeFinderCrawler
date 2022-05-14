@@ -5,7 +5,6 @@ using RequestsServices;
 
 namespace HomeFinderCrawler
 {
-    //TODO: Aplikacja nie powinna wyrzucać wyjątków, ale powinna logować wszystkie błędy do jakieś pliku, bądź może nawet tabeli skoro i tak już mamy stworzoną bazę danych
     public class Program
     {
         // Global declaration
@@ -19,64 +18,52 @@ namespace HomeFinderCrawler
         public static void Main(string[] args)
         {
             if (args is null)
-            {
                 throw new ArgumentNullException(nameof(args));
-            } 
 
+            CleanCrawlerSimulation();
+        }
+
+        /// <summary>
+        /// A function for testing the crawler's performance
+        /// </summary>
+        private static void TestCrawlerMethod()
+        {
             WebCrawler cr = new(new DataContext("DataSource=craw.db"));
 
-            // Adding to database search template
-            cr.AddWebsite(AddOLXCrawler());
+            cr.AddWebsite(AddOLXWebsite());
             cr.AddWebsite(AddGratkaWebsite());
-            // TODO: Sprwadzanie przy dodawaniu czy nie ma już identycznej wartości, jeśli nie to nadpisz.
-            //cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
+            cr.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(cr));
             cr.AddSynonymsPropertiesToWebsite(AddOLXManssionSynonyms(cr));
-            // TODO: Do zrobienia są synonimy w sposób dynamiczny.
-            // AddGratkaSynonymsProperties()
-
-            //cr.AddWebsite("https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/cala-polska", "a", "http://www.otodom.pl", 2, new Crawler_announcement() { Image_node_name = "img" });
 
             cr.ShowWebpages();
-           // cr.StartLinkAnnouncementCrawler();
-           // cr.StartAnnouncementsCrawler();
-            //cr.Start();
-           // cr.Stop();
+            cr.StartLinkAnnouncementCrawler();
+            cr.StartAnnouncementsCrawler();
+            cr.Start();
 
-            // Sending requests to server
             RequestsService rs = new();
             rs.PostUrl = "http://localhost:8080/announcement/many";
             rs.RegisterUrl = "http://localhost:8080/auth/register";
             rs.LoginUrl = "http://localhost:8080/auth/login";
             rs.AnnouncementsUrl = "http://localhost:8080/announcement/many";
             List<Announcement> announcements = cr.AnnouncementToSend();
-
-            // Lista wszystkich danych z ogłoszeniami o mieszkaniach
             List<Announcement_manssion> announcement_Manssions = cr.AnnouncementManssionsToSend();
 
-            Console.WriteLine("zebramop");
             rs.AddErrorLogService(new ErrorLogService("log.txt"));
             rs.StartErrorLogService();
-            //rs.Register("patryk@eo3o.pl", "password");
             rs.Login("www@ww3w3.pl", "password");
-            Console.WriteLine("Dodawanie ogłozeń");
-            //rs.AddAnnouncements(announcements);
-            Console.WriteLine("wysyłaniue");
-            Console.WriteLine(announcement_Manssions.Count);
             rs.Send(announcement_Manssions);
-            Console.WriteLine("wYSŁANE");
-            // If sending was successfull, i must update database
-            //cr.AnnoundementSend(announcements);
-
-            //CleanCrawlerSimulation();
         }
 
+        /// <summary>
+        /// The function creates an array of synonyms for OLX
+        /// </summary>
+        /// <param name="webCrawler">WebCrawler class</param>
+        /// <returns>Array of synonyms for OLX</returns>
         private static Announcement_manssion_synonyms[] AddOLXManssionSynonyms(WebCrawler webCrawler)
         {
-            // Tworzenie listy synonimów
             List<Announcement_manssion_synonyms> announcement_Manssion_Synonyms = new();
             Crawler_website cw = webCrawler.GetCrawlerAnnouncementId("https://www.olx.pl/d/nieruchomosci/");
 
-            // Listy z wartościami do dodania
             string[] Properties = new string[]
             {
                 "RoomCount", "Level", "Furnished", "TypeOfBuild", "Area", 
@@ -119,13 +106,16 @@ namespace HomeFinderCrawler
             return announcement_Manssion_Synonyms.ToArray();
         }
 
+        /// <summary>
+        /// The function creates an array of synonyms for Gratka website
+        /// </summary>
+        /// <param name="webCrawler">WebCrawler class</param>
+        /// <returns>Array of synonyms for gratka</returns>
         private static Announcement_manssion_synonyms[] AddGratkaManssionSynonyms(WebCrawler webCrawler)
         {
-            // Tworzenie listy synonimów
             List<Announcement_manssion_synonyms> announcement_Manssion_Synonyms = new();
             Crawler_website cw = webCrawler.GetCrawlerAnnouncementId("https://gratka.pl/nieruchomosci?sort=newest");
 
-            // Listy z wartościami do dodania
             string[] Properties = new string[]
             {
                 "RoomCount", "Level", "Furnished", "TypeOfBuild", "Area",
@@ -158,7 +148,6 @@ namespace HomeFinderCrawler
                 {
                     announcement_Manssion_Synonyms.Add(new Announcement_manssion_synonyms()
                     {
-                        Id = i + 1,
                         Value = values[i].Replace(" ", "").ToLower(),
                         Announcement_dictionary_mansion_properties = webCrawler.GetAnnouncementMansionSynonymPropertiesId(Properties[i]),
                         Crawler_Website = cw
@@ -169,20 +158,22 @@ namespace HomeFinderCrawler
             return announcement_Manssion_Synonyms.ToArray();
         }
 
-        // Production Crawler Run Method
+        /// <summary>
+        /// Function to launch the crawler
+        /// </summary>
         private static void CleanCrawlerSimulation()
         {
             // Configuring Timer
-            _crawlerTimer.Interval = 2000;
+            _crawlerTimer.Interval = 2400;
             _crawlerTimer.AutoReset = true;
 
             // Declare Constants
             const string _dataBaseFile = "ProdCrawler.db";
             const string _registerUrl = "http://localhost:8080/auth/register";
             const string _loginUrl = "http://localhost:8080/auth/login";
-            const string _announcementsUrl = "http://localhost:8080/announcement";
+            const string _announcementsUrl = "http://localhost:8080/announcement/many";
             const string _logFilePath = "ProdRequestLog.txt";
-            const string _username = "patryk@elo.pl";
+            const string _username = "www@ww3w3.pl";
             const string _password = "password";
 
             // Delete database file 
@@ -192,13 +183,19 @@ namespace HomeFinderCrawler
             _webCrawler = new(new DataContext("DataSource=" + _dataBaseFile));
 
             // Adding Gratka site crawling
-            _webCrawler.AddWebsite(AddGratkaWebsite());
+            //_webCrawler.AddWebsite(AddGratkaWebsite());
+            _webCrawler.AddWebsite(AddOLXWebsite());
+
+            _webCrawler.AddSynonymsPropertiesToWebsite(AddOLXManssionSynonyms(_webCrawler));
+            //_webCrawler.AddSynonymsPropertiesToWebsite(AddGratkaManssionSynonyms(_webCrawler));
 
             // Declare and run request service
-            _requestsService = new();
-            _requestsService.RegisterUrl = _registerUrl;
-            _requestsService.LoginUrl = _loginUrl;
-            _requestsService.AnnouncementsUrl = _announcementsUrl;
+            _requestsService = new()
+            {
+                RegisterUrl = _registerUrl,
+                LoginUrl = _loginUrl,
+                PostUrl = _announcementsUrl
+            };
             _requestsService.AddErrorLogService(new ErrorLogService(_logFilePath));
             _requestsService.StartErrorLogService();
             _requestsService.Login(_username,_password);
@@ -209,25 +206,36 @@ namespace HomeFinderCrawler
             Console.ReadLine();
         }
 
+        /// <summary>
+        /// A cyclical function event that is used to download data from websites and send then to the API
+        /// </summary>
         private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
-            if(_isRunning)
-            {
-                Console.WriteLine("Crawler is running. Skip");
-                return;
-            }
+            if (_isRunning) return;
+
+            FileStream fs = new FileStream("./console_out.txt", FileMode.OpenOrCreate, FileAccess.Write);
+            StreamWriter sw = new(fs);
 
             Console.WriteLine(e.SignalTime);
             _isRunning = true;
             TextWriter backupOut = Console.Out;
-            Console.SetOut(TextWriter.Null);
+            //Console.SetOut(TextWriter.Null);
+            Console.SetOut(sw);
             _webCrawler.StartLinkAnnouncementCrawler();
             _webCrawler.StartAnnouncementsCrawler();
-            _requestsService.AddAnnouncements(_webCrawler.AnnouncementToSend());
+            List<Announcement_manssion> announcement_massions_to_send = _webCrawler.AnnouncementManssionsToSend();
+            if (_requestsService.Send(announcement_massions_to_send))
+                _webCrawler.SetSendStatus(announcement_massions_to_send);
             Console.SetOut(backupOut);
+            sw.Close();
+            fs.Close();
             _isRunning = false;
         }
 
+        /// <summary>
+        /// The function returns the entity of gratka Crawler_website
+        /// </summary>
+        /// <returns>Crawler_website</returns>
         private static Crawler_website AddGratkaWebsite()
         {
             Crawler_announcement ca = new()
@@ -260,7 +268,11 @@ namespace HomeFinderCrawler
             };
         }
 
-        private static Crawler_website AddOLXCrawler()
+        /// <summary>
+        /// The function returns the entity of OLX Cralwer_website
+        /// </summary>
+        /// <returns>Crawler_website</returns>
+        private static Crawler_website AddOLXWebsite()
         {
             Crawler_announcement ca = new()
             {

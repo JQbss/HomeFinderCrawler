@@ -27,7 +27,7 @@ namespace Crawler
         /// A function that retrieves the data to be sent
         /// </summary>
         /// <returns>Announcement_manssion entity list to be sent</returns>
-        public List<Announcement_manssion> AnnouncementManssionsToSend() => _databaseService.GetAnnouncementManssionBySendAndProcessed(false, false);
+        public List<Announcement_manssion> AnnouncementManssionsToSend() => _databaseService.GetAnnouncementManssionBySendAndProcessed(false, true);
 
         /// <summary>
         /// A function that retrieves the data to be sent
@@ -55,7 +55,6 @@ namespace Crawler
                     foreach (HtmlNode item in nodes)
                     {
                         string link = item.GetAttributeValue(crawler.Link_attribute_value, "");
-                        Console.WriteLine(link);
                         bool control = true;
                         if (crawler.Crawler_Announcement.Crawler_Website_Link_Contains is not null)
                         {
@@ -66,7 +65,7 @@ namespace Crawler
                                     control = false;
                                     break;
                                 }
-                                else if (link.Contains(link_contains.Value))
+                                else if (!link_contains.IsContains && link.Contains(link_contains.Value))
                                 {
                                     control = false;
                                     break;
@@ -74,17 +73,11 @@ namespace Crawler
                             }
                         }
 
-                        // Jeśli link pasuje do podango schematu to kontunuujmy badanie
                         if (!control) continue;
 
                         Announcement? announcement1 = _databaseService.GetAnnouncementByLink(crawler.Prelink + link);
-                        if (announcement1 is not null)
+                        if (announcement1 is null)
                         {
-                            Console.WriteLine("ogłoszenie jest aktualne");
-                        }
-                        else
-                        {
-                            //Adding data to database
                             Console.WriteLine(crawler.Prelink + link);
                             announcements.Add(new() { Link = crawler.Prelink + link, Processed = false, Crawler_Website = crawler, Announcement_type = "manssion" });
                         }
@@ -97,6 +90,7 @@ namespace Crawler
             foreach(Announcement announcement in announcements.Distinct())
                 _databaseService.AddAnnouncement(announcement);
 
+            Console.WriteLine("zapisywanie");
             _databaseService.SaveChanges();
         }
         
@@ -108,7 +102,10 @@ namespace Crawler
             List<Announcement> announcements = _databaseService.GetAnnouncements().Where(x => x.Processed == false).ToList();
             
             foreach (Announcement announcement in announcements)
+            {
                 StartAnnouncementCrawler(announcement.Link);
+                announcement.Processed = true;
+            }
 
             _databaseService.SaveChanges();
         }
@@ -474,7 +471,7 @@ namespace Crawler
         /// </summary>
         /// <param name="webName">Url Webpage</param>
         /// <returns>Crawler_website or null</returns>
-        public Crawler_website? GetCrawlerAnnouncementId(string webName) => _databaseService.GetCrawlerAnnouncementId(webName);
+        public Crawler_website? GetCrawlerAnnouncementId(string webName) => _databaseService.GetCrawlerAnnouncement(webName);
 
         /// <summary>
         /// A feature that adds a new website to the crawler
@@ -489,6 +486,18 @@ namespace Crawler
         }
 
         /// <summary>
+        /// The function that sets the status of sent advertisements
+        /// </summary>
+        /// <param name="announcement_Manssions">Announcement Manssions list</param>
+        public void SetSendStatus(List<Announcement_manssion> announcement_Manssions)
+        {
+            foreach(Announcement_manssion am in announcement_Manssions)
+                am.Announcement.Sent = true;
+
+            _databaseService.SaveChanges();
+        }
+
+        /// <summary>
         /// Function show all webpages in cralwer database
         /// </summary>
         public void ShowWebpages()
@@ -497,6 +506,7 @@ namespace Crawler
 
             for(int i = 0; i < crawler_Websites.Count; i++)
                 Console.WriteLine(crawler_Websites[i].Id + " " + crawler_Websites[i].Website + " " + crawler_Websites[i].Regex);
+            Console.WriteLine("Pokazano strony");
         }
 
         /// <summary>

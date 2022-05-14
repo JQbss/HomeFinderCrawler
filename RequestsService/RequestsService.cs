@@ -19,10 +19,27 @@ namespace RequestsServices
         public string LoginUrl { get; set; } = string.Empty;
         public string RegisterUrl { get; set; } = string.Empty;
 
+        /// <summary>
+        /// A function that adds a service for logging errors in requests
+        /// </summary>
+        /// <param name="logService">IErrorLogService</param>
         public void AddErrorLogService(IErrorLogService logService) => _logService = logService;
+
+        /// <summary>
+        /// Function that starts error logging
+        /// </summary>
         public void StartErrorLogService() => _logService?.StartLog();
+
+        /// <summary>
+        /// Function that stop error logging
+        /// </summary>
         public void StopErrorLogService() => _logService?.StopLog();
 
+        /// <summary>
+        /// Function for registering a new user
+        /// </summary>
+        /// <param name="username">Username</param>
+        /// <param name="password">Password</param>
         public void Register(string username, string password)
         {
             if (RegisterUrl == String.Empty)
@@ -56,6 +73,11 @@ namespace RequestsServices
             }
         }
 
+        /// <summary>
+        /// Function for logging in with API
+        /// </summary>
+        /// <param name="username">Username</param>
+        /// <param name="password">Password</param>
         public void Login(string username, string password)
         {
             if(LoginUrl == string.Empty)
@@ -101,6 +123,9 @@ namespace RequestsServices
             }
         }
 
+        /// <summary>
+        /// Function for logging out of the API
+        /// </summary>
         public void Logout()
         {
             _isLogged = false;
@@ -110,9 +135,13 @@ namespace RequestsServices
         }
 
         // Przeciążenie funkcji
+        /// <summary>
+        /// Function for sending real estate advertisements
+        /// </summary>
+        /// <param name="announcement_Manssions"> List of Manssion announcements</param>
+        /// <returns></returns>
         public bool Send(List<Announcement_manssion> announcement_Manssions)
         {
-            // Tutaj powinno być tylko przygotowanie pliku
             if (PostUrl == String.Empty || announcement_Manssions is null || announcement_Manssions.Count is 0) return false;
 
             JsonSerializerSettings options = new()
@@ -123,13 +152,13 @@ namespace RequestsServices
             };
 
             List<JObject> oblist = new();
-
             // Tylko serializacja ogłoszenia
             foreach( Announcement_manssion addMann in announcement_Manssions)
             {
                 if (addMann is not null)
                 {
                     var result = JObject.Parse(JsonConvert.SerializeObject(addMann, options));
+                    Console.WriteLine(result);
                     result.Merge(JObject.Parse(JsonConvert.SerializeObject(addMann.Announcement, options)));
 
                     // Creating address to json
@@ -155,9 +184,6 @@ namespace RequestsServices
                         }
                     }
 
-
-                    // Tworzenie listy obrazów
-                    // To jest mało wydajne, bo robię listę przez Add
                     List<string> imagesList = new();
                     if (imagesList is not null)
                     {
@@ -169,11 +195,15 @@ namespace RequestsServices
                     oblist.Add(result);
                 }
             }
-            SendJson(JsonConvert.SerializeObject(oblist, options).ToString());
             Console.WriteLine(JsonConvert.SerializeObject(oblist, options).ToString());
-            return true;
+            return SendJson(JsonConvert.SerializeObject(oblist, options).ToString());
         }
 
+        /// <summary>
+        /// Private function to send Json to API
+        /// </summary>
+        /// <param name="json">string with json</param>
+        /// <returns>True if request siccessfully sent</returns>
         private bool SendJson(string json)
         {
             StringContent sc = new(json, Encoding.UTF8, "application/json");
@@ -195,86 +225,5 @@ namespace RequestsServices
                 return false;
             }
         }
-
-
-        public bool Send(List<Announcement> announcements)
-        {
-            if (PostUrl == string.Empty /*|| !_isLogged*/) return false;
-
-            JsonSerializerSettings options = new()
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.Indented,
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-
-            string result = JsonConvert.SerializeObject(announcements, options);
-            Console.WriteLine(result);
-
-            StringContent sc = new(result.ToString(), Encoding.UTF8, "application/json");
-            try
-            {
-                HttpResponseMessage response = _httpClient.PostAsync(PostUrl, sc).Result;
-
-                response.Content.ReadAsStringAsync();
-
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    return true;
-                return false;
-            }
-            catch (Exception e)
-            {
-                _logService?.AddLog(_applicationModuleName + "Exception:" + e.Message);
-                return false;
-            }
-        }
-
-        public bool AddAnnouncements(List<Announcement> announcements)
-        {
-            if (AnnouncementsUrl == string.Empty && _isLogged)
-            {
-                _logService?.AddLog(_applicationModuleName + "Error in adding Announcement. AnnouncementsUrl: " + AnnouncementsUrl + "_isLogged: " + _isLogged);
-                return false;
-            }
-
-            foreach(Announcement announcement in announcements)
-                AddAnnouncement(announcement);
-
-            return true;
-        }
-
-        public bool AddAnnouncement(Announcement announcement)
-        {
-            JObject json = new()
-            {
-                { "description", announcement.Description },
-                { "title", announcement.Title },
-                { "link", announcement.Link }
-            };
-            StringContent sc = new(json.ToString(), Encoding.UTF8, "application/json");
-
-            try
-            {
-                HttpResponseMessage response = _httpClient.PostAsync(AnnouncementsUrl, sc).Result;
-                var content = response.Content.ReadAsStringAsync();
-
-                Console.WriteLine(response.StatusCode);
-                if (response.StatusCode == System.Net.HttpStatusCode.Created)
-                {
-                    _logService?.AddLog(_applicationModuleName + "Succesfull send announcement id:" + announcement.Id);
-                    announcement.Sent = true;
-                    return true;
-                }
-                _logService?.AddLog(_applicationModuleName + "Failed send announcement id:" + announcement.Id + " Content:" + content.Result.ToString());
-                return false;
-            }
-            catch(Exception e)
-            {
-                _logService?.AddLog(_applicationModuleName + "Exception announcement id:" + announcement.Id + " Exception:" + e.Message);
-                return false;
-            }
-        }
-
-        ~RequestsService() => _httpClient?.Dispose();
     }
 }

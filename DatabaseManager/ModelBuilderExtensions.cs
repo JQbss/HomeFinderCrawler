@@ -7,17 +7,10 @@ namespace DatabaseManager
     {
         public static void Seed(this ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Announcement_dictionary_item>().HasData
-                (
-                    new Announcement_dictionary_item() { Id = 1, Name = "Mieszkanie" },
-                    new Announcement_dictionary_item() { Id = 2, Name = "Dom" },
-                    new Announcement_dictionary_item() { Id = 3, Name = "Garaż" },
-                    new Announcement_dictionary_item() { Id = 4, Name = "Działka" }
-                );
             modelBuilder.Entity<Announcement_dictionary_mansion_properties>().HasData
                 (
                     new Announcement_dictionary_mansion_properties() 
-                    { 
+                    {
                         Id = 1,
                         Name = "RoomCount",
                         Description = "Liczba pokoi w mieszkaniu"

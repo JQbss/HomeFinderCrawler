@@ -13,12 +13,23 @@ namespace DatabaseManager
             _dbContext.Database.EnsureCreated();
         }
 
-        public Crawler_website? GetCrawlerAnnouncementId(string web_name)
+        /// <summary>
+        /// Returns the entity with the website
+        /// </summary>
+        /// <param name="web_name">Website URL</param>
+        /// <returns>Crawler_website</returns>
+        public Crawler_website? GetCrawlerAnnouncement(string web_name)
         {
             return _dbContext.CrawlerWebsites
                 .Where(x => x.Website == web_name)
                 .FirstOrDefault();
         }
+
+        /// <summary>
+        /// Returns an entity from a dictionary of property properties
+        /// </summary>
+        /// <param name="property_name">Property name</param>
+        /// <returns>Announcement_dictionary_mansion_properties</returns>
         public Announcement_dictionary_mansion_properties? GetAnnonuncementDictionaryMansionPropertiesId(string property_name)
         {
             return _dbContext.AnnouncementDictionaryMansionProperties
@@ -26,6 +37,11 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// Returns the entity with the announcement
+        /// </summary>
+        /// <param name="id">Announcement ID</param>
+        /// <returns>Announcement class</returns>
         public Announcement? GetAnnouncementById(int id)
         {
             return _dbContext.Announcements
@@ -33,6 +49,12 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// The function returns synonym array based on the synonym name
+        /// </summary>
+        /// <param name="Synonym_name">Property synonym name</param>
+        /// <param name="WebSite_ID">Website ID</param>
+        /// <returns></returns>
         public string[] GetAnnouncementsManssionSynonyms(string Synonym_name, int WebSite_ID)
         {
             return _dbContext.AnnouncementManssionSynonyms
@@ -42,6 +64,11 @@ namespace DatabaseManager
                 .ToArray();
         }
 
+        /// <summary>
+        /// The function returns the id of the webpage from which the advertisement comes
+        /// </summary>
+        /// <param name="AnnouncementID"> Announcement ID</param>
+        /// <returns>int with crawler website id</returns>
         public int GetAnnonucementCrawlerWebsiteId(int AnnouncementID)
         {
             return _dbContext.Announcements
@@ -50,10 +77,12 @@ namespace DatabaseManager
                 .Select(x => x.Crawler_Website.Id)
                 .FirstOrDefault();
         }
-        //
-        // SELECT by link
-        //
 
+        /// <summary>
+        /// The function returns an advertisement based on an advertisement link
+        /// </summary>
+        /// <param name="link"> announcement link</param>
+        /// <returns>Announcement</returns>
         public Announcement? GetAnnouncementByLink(string link)
         {
             return _dbContext.Announcements
@@ -62,6 +91,12 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// Function that returns a list of real estate advertisements filtered after sent and processed
+        /// </summary>
+        /// <param name="sent">Or sent ads</param>
+        /// <param name="processed">Or processed ads</param>
+        /// <returns>List of real estate advertisment</returns>
         public List<Announcement_manssion> GetAnnouncementManssionBySendAndProcessed(bool sent, bool processed = true)
         {
             return _dbContext.AnnouncementManssions
@@ -70,9 +105,12 @@ namespace DatabaseManager
                 .Where(x => x.Announcement.Sent == sent && x.Announcement.Processed == processed).ToList();
         }
 
-        //
-        // SELECT by sent
-        //
+        /// <summary>
+        /// Function that returns a list of advertisements filtered after sent and processed
+        /// </summary>
+        /// <param name="sent">Or sent ads</param>
+        /// <param name="processed">Or processed ads</param>
+        /// <returns>Announcement list</returns>
         public List<Announcement> GetAnnouncementsBySentAndProcessed(bool sent, bool processed = true)
         {
             return _dbContext.Announcements
@@ -81,7 +119,10 @@ namespace DatabaseManager
                 .ToList();
         }
 
-        //SELECT * FROM TABLE
+        /// <summary>
+        /// The function returns a list of web pages processed by the crawler
+        /// </summary>
+        /// <returns>Websites in crawler list</returns>
         public List<Crawler_website> GetCrawlerWebsites()
         {
             return _dbContext.CrawlerWebsites
@@ -90,6 +131,10 @@ namespace DatabaseManager
                 .ToList();
         }
 
+        /// <summary>
+        /// The function returns a list of all ads in the crawler
+        /// </summary>
+        /// <returns>Announcements list</returns>
         public List<Announcement> GetAnnouncements()
         {
             return _dbContext.Announcements
@@ -97,21 +142,30 @@ namespace DatabaseManager
                 .ToList();
         }
 
-        // Funkcja sprawdzająca czy istnieje już podany synonim.
+        /// <summary>
+        /// The function checks if a given synonym exists for a given page.
+        /// </summary>
+        /// <param name="CrawlerWebsiteID">Website ID</param>
+        /// <param name="AnnouncementDictionaryMansionPropertiesId">Announcement Dictionary Mansion Properties id</param>
+        /// <param name="SynonymValue"> Synonym Value</param>
+        /// <returns>boolean information about exists</returns>
         public bool CheckSynonymExists(int CrawlerWebsiteID, int AnnouncementDictionaryMansionPropertiesId, string SynonymValue)
         {
             if (SynonymValue == null || SynonymValue.Length == 0)
                 return false;
 
-            // Sprawdznie czy synonim istnieje
             var tmp = _dbContext.AnnouncementManssionSynonyms
                 .Where(x => x.Value == SynonymValue && x.Crawler_Website.Id == CrawlerWebsiteID && x.Announcement_dictionary_mansion_properties.Id == AnnouncementDictionaryMansionPropertiesId)
                 .FirstOrDefault();
 
-            return tmp is not null ? true : false;
+            return tmp is not null;
         }
 
-        //SELECT * FROM ANNOUNCEMENT MANSSION BY ANNOUNCEMENT ID
+        /// <summary>
+        /// The function returns information about a real estate advertisement related to a given advertisement.
+        /// </summary>
+        /// <param name="AnnouncemenetId"> Announcement Id</param>
+        /// <returns>Announcement manssion</returns>
         public Announcement_manssion? GetAnnouncementManssionByAnnouncemenetId(int AnnouncemenetId)
         {
             return _dbContext.AnnouncementManssions
@@ -119,6 +173,11 @@ namespace DatabaseManager
                 .FirstOrDefault();
         }
 
+        /// <summary>
+        /// The function adds a real estate advertisement
+        /// </summary>
+        /// <param name="announcement_Manssion">announcement manssion to add</param>
+        /// <returns>True if the ad has been added</returns>
         public bool AddAnnouncementManssion(Announcement_manssion announcement_Manssion)
         {
             if (announcement_Manssion is null) return false;
@@ -127,6 +186,11 @@ namespace DatabaseManager
             return true;
         }
 
+        /// <summary>
+        /// The function adds announcement
+        /// </summary>
+        /// <param name="announcement">Announcement to add</param>
+        /// <returns>True if the ad has been added</returns>
         public bool AddAnnouncement(Announcement announcement)
         {
             if(announcement is null) return false;
@@ -135,6 +199,11 @@ namespace DatabaseManager
             return true;
         }
 
+        /// <summary>
+        /// The function adds announcement manssion synonym
+        /// </summary>
+        /// <param name="announcement_Manssion_Synonyms">Announcement Manssion Synonym</param>
+        /// <returns>True if synonym has been added</returns>
         public bool AddSynonymPropertiesWebsite(Announcement_manssion_synonyms announcement_Manssion_Synonyms)
         {
             if (announcement_Manssion_Synonyms is null) return false;
@@ -143,6 +212,11 @@ namespace DatabaseManager
             return true;
         }
 
+        /// <summary>
+        /// The function adds crawler website
+        /// </summary>
+        /// <param name="crawler_Website">Website to add</param>
+        /// <returns>True if the website has been added</returns>
         public bool AddCrawlerWebsite(Crawler_website crawler_Website)
         {
             if (crawler_Website is null) return false;
@@ -151,6 +225,9 @@ namespace DatabaseManager
             return true;
         }
 
+        /// <summary>
+        /// The function commit changes to the database
+        /// </summary>
         public void SaveChanges() => _dbContext.SaveChanges();
     }
 }

@@ -219,7 +219,7 @@ namespace HomeFinderCrawler
             Console.WriteLine(e.SignalTime);
             _isRunning = true;
             TextWriter backupOut = Console.Out;
-            //Console.SetOut(TextWriter.Null);
+            Console.SetOut(TextWriter.Null);
             Console.SetOut(sw);
             _webCrawler.StartLinkAnnouncementCrawler();
             _webCrawler.StartAnnouncementsCrawler();

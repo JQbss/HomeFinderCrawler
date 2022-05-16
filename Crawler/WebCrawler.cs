@@ -52,6 +52,7 @@ namespace Crawler
                     HtmlDocument doc = web.Load($"{crawler.Website}{crawler.Pagequery}{page}");
                     HtmlNode[] nodes = doc.DocumentNode.SelectNodes($"//{crawler.Regex}").ToArray();
 
+                    int i = 0;
                     foreach (HtmlNode item in nodes)
                     {
                         string link = item.GetAttributeValue(crawler.Link_attribute_value, "");
@@ -78,8 +79,24 @@ namespace Crawler
                         Announcement? announcement1 = _databaseService.GetAnnouncementByLink(crawler.Prelink + link);
                         if (announcement1 is null)
                         {
+                            string location = string.Empty;
                             Console.WriteLine(crawler.Prelink + link);
-                            announcements.Add(new() { Link = crawler.Prelink + link, Processed = false, Crawler_Website = crawler, Announcement_type = "manssion" });
+                            var nod = item.SelectNodes("//p").Where(x => x.HasClass("css-p6wsjo-Text")).ToArray()[i];
+                            if (nod is not null)
+                            {
+                                location = Regex.Replace(nod.InnerText.Split(" - ")[0], "([a-z])([A-Z])", "$1 $2");
+                                i++;
+
+                            }
+                            announcements.Add(new()
+                            {
+                                Link = crawler.Prelink + link,
+                                Processed = false,
+                                Crawler_Website = crawler,
+                                Announcement_type = "manssion",
+                                Localization = location
+                            });
+
                         }
                     }
                     page++;
@@ -194,8 +211,11 @@ namespace Crawler
         {
             int websiteID = _databaseService.GetAnnonucementCrawlerWebsiteId(announcement_Manssion.Announcement.Id);
             HtmlNode[] nodes; 
-            if (announcement.Crawler_Website.Id == 1)
+
+            // O tym trzeba pamiętać
+            if (announcement.Crawler_Website.Id == 2)
                     nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("parameters__singleParameters")).ToArray();
+            // Ogłoszenia z OLX
             else
                 nodes = doc.DocumentNode.SelectNodes("//ul").Where(x => x.HasClass("css-sfcl1s")).ToArray();
 
@@ -407,6 +427,12 @@ namespace Crawler
 
             if (announcement is null)
                 return;
+
+            Console.WriteLine("DOKUMNET");
+            foreach(var nod in doc.DocumentNode.SelectNodes("//div").Where(x => x.HasClass("//css-1q7h1ph")))
+            {
+                Console.WriteLine(nod.InnerText);
+            }
 
             DownloadImagesUrl(announcement, doc);
             DownloadTitle(announcement, doc);

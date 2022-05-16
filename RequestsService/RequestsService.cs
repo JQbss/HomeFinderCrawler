@@ -165,9 +165,9 @@ namespace RequestsServices
                     // This should be in database
                     if (addMann.Localization is not null)
                     {
-                        string[] address = addMann.Localization.Split(',');
+                        string[] address = addMann.Announcement.Localization.Split(',');
 
-                        if (address is not null && address.Length > 2)
+                        if (address is not null)
                         {
                             var add =
                             new
@@ -175,9 +175,9 @@ namespace RequestsServices
                                 address =
                                 new
                                 {
-                                    miejscowosc = address[0],
-                                    powiat = address[1],
-                                    wojewodztwo = address[2]
+                                    miejscowosc = address[0] is not null? address[0]: null,
+                                    powiat = address[1] is not null? address[1]: null,
+                                    wojewodztwo = address[2] is not null ? address[2] : null
                                 }
                             };
                             result.Merge(JObject.Parse(JsonConvert.SerializeObject(add, options).ToString()));

@@ -39,6 +39,8 @@ namespace DatabaseManager.Entities
         [JsonIgnore]
         public bool Sent { get; set; } = false;
 
+        public string? Localization { get; set; }
+
         public bool Equals(Announcement? other)
         {
             if(other is null) return false;

@@ -161,6 +161,19 @@ namespace RequestsServices
                     Console.WriteLine(result);
                     result.Merge(JObject.Parse(JsonConvert.SerializeObject(addMann.Announcement, options)));
 
+                    if (addMann.Announcement.Localization is not null )
+                    {
+                        var add =
+                            new
+                            {
+                                address = new
+                                {
+                                    miejscowosc = addMann.Announcement.Localization
+                                }
+                            };
+                        result.Merge(JObject.Parse(JsonConvert.SerializeObject(add, options).ToString()));
+                    }
+
                     // Creating address to json
                     // This should be in database
                     if (addMann.Localization is not null)
